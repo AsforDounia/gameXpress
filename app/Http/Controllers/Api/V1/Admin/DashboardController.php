@@ -29,10 +29,10 @@ class DashboardController extends Controller
         $lowStockProducts = Product::where('stock', '<=', 5)->get();
         $lowStockCount = $lowStockProducts->count();
 
-        // if ($lowStockCount > 0) {
-        //     $admins = User::role('super_admin')->get();
-        //     Notification::send($admins, new LowStockNotification($lowStockProducts));
-        // }
+        if ($lowStockCount > 0) {
+            $admins = User::role('super_admin')->get();
+            Notification::send($admins, new LowStockNotification($lowStockProducts));
+        }
 
         $dashboardData = [
             'total_products' => Product::count(),
