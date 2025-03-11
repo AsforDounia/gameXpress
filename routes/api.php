@@ -10,7 +10,7 @@ use App\Http\Controllers\Api\V1\Admin\UserController;
 
 Route::prefix('v1')->group(function () {
     Route::prefix('admin')->group(function () {
-       
+        // Auth routes
         Route::post('register', [AuthController::class, 'register']);
         Route::post('login', [AuthController::class, 'login']);
 
