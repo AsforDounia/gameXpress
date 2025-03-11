@@ -19,6 +19,11 @@ class AuthController extends Controller
         ]);
 
         $user = User::create($fields);
+        if (User::count() === 1) {
+            $user->assignRole('super_admin');
+        } else {
+            $user->assignRole('guest');
+        }
 
         $token = $user->createToken($request->name);
 
