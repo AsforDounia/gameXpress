@@ -9,13 +9,17 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
+    public function up()
     {
         Schema::create('product_images', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('product_id')->constrained('products'); // Foreign key to products table
+            $table->string('image_url');
+            $table->boolean('is_primary')->default(false);
             $table->timestamps();
         });
     }
+
 
     /**
      * Reverse the migrations.
