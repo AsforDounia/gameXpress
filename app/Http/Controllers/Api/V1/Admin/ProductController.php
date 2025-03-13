@@ -67,7 +67,10 @@ class ProductController extends Controller
             return response()->json(['message' => 'Product not found'], 404);
         }
 
-        return response()->json($product);
+        return response()->json([
+            'product' => $product
+        ], 200);
+
     }
 
     /**
@@ -86,7 +89,7 @@ class ProductController extends Controller
             'slug' => 'sometimes|string|unique:products,slug,' . $id,
             'price' => 'sometimes|numeric',
             'stock' => 'sometimes|integer',
-            'status' => 'sometimes|boolean',
+            'status' => 'required|in:available,out_of_stock',
             'subcategory_id' => 'sometimes|exists:subcategories,id',
         ]);
 
