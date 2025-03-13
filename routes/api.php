@@ -23,7 +23,22 @@ Route::prefix('v1')->group(function () {
         Route::middleware('auth:sanctum')->group(function () {
             Route::post('logout', [AuthController::class, 'logout']);
             Route::get('dashboard', [DashboardController::class, 'index']);
+
+
+            Route::apiResource('products', ProductController::class)->only(['index','show']);
+            Route::apiResource('categories', CategoryController::class)->only(['index','show']);
+            Route::middleware('check.product.manager')->group(function () {
+                Route::apiResource('products', ProductController::class)->except(['index','show']);
+                Route::apiResource('categories', CategoryController::class)->except(['index','show']);
+            });
+
+            Route::middleware('check.user.manager')->group(function () {
+                Route::apiResource('users', UserController::class);
+            });
+            
         });
+
+
     });
 });
 
@@ -36,5 +51,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('check.product.manager')->group(function () {
         Route::apiResource('v1/admin/products', ProductController::class)->except(['index','show']);
         Route::apiResource('v1/admin/categories', CategoryController::class)->except(['index','show']);
+    });
+
+    Route::middleware('check.user.manager')->group(function () {
+        Route::apiResource('v1/admin/users', UserController::class);
     });
 });

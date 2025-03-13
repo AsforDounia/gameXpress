@@ -6,7 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class CheckProductManagerPermission
+class CheckUserManagerPermission
 {
     /**
      * Handle an incoming request.
@@ -15,7 +15,7 @@ class CheckProductManagerPermission
      */
     public function handle(Request $request, Closure $next){
         $user = auth()->user();
-        if (!$user || !$user->hasAnyRole(['super_admin', 'product_manager'])) {
+        if (!$user || !$user->hasAnyRole(['super_admin', 'user_manager'])) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Unauthorized'

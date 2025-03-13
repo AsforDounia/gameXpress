@@ -30,6 +30,7 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
+
         $request->validate([
             'name' => 'required|string|max:255',
             'slug' => 'required|string|unique:products,slug',
@@ -40,7 +41,9 @@ class ProductController extends Controller
             'images' => 'array'
         ]);
 
-        $product = Product::create($request->only(['name', 'slug', 'price', 'stock', 'status', 'subcategory_id']));
+        $status = $request->stock > 0 ? 'available' : 'out_of_stock';
+        $product = Product::create($request->only(['name', 'slug', 'price', 'stock', 'subcategory_id']) + ['status' => $status]);
+
         $productImages = [];
         if (isset($request->images)) {
             foreach ($request->images as $image) {
@@ -50,9 +53,8 @@ class ProductController extends Controller
                     'is_primary' => true,
                 ]);
             }
-            $product->productImages()->saveMany($productImages); // Save the images
+            $product->productImages()->saveMany($productImages);
         }
-
         return response()->json(['message' => 'Product created successfully', 'product' => $product->load('productImages')], 201);
     }
 
@@ -89,12 +91,15 @@ class ProductController extends Controller
             'slug' => 'sometimes|string|unique:products,slug,' . $id,
             'price' => 'sometimes|numeric',
             'stock' => 'sometimes|integer',
-            'status' => 'required|in:available,out_of_stock',
             'subcategory_id' => 'sometimes|exists:subcategories,id',
         ]);
 
-        $product->update($request->all());
+        if ($request->has('stock')) {
+            $status = $request->stock > 0 ? 'available' : 'out_of_stock';
+            $request->merge(['status' => $status]);
+        }
 
+        $product->update($request->all());
         return response()->json(['message' => 'Product updated successfully', 'product' => $product]);
     }
 
