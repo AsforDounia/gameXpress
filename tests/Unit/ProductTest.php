@@ -14,14 +14,13 @@ class ProductTest extends TestCase
     public function test_a_product_can_be_created_with_images()
     {
         // Storage::fake('public');
-
         $user = User::factory()->create();
         $user->assignRole('product_manager');
         $this->actingAs($user);
         $subcategory = Subcategory::factory()->create();
         $data = [
             'name' => 'Test Product',
-            'slug' => 'test-product-6',
+            'slug' => 'test-product-12',
             'price' => 199.99,
             'stock' => 10,
             'status' => "available",
