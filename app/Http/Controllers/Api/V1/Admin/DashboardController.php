@@ -26,13 +26,11 @@ class DashboardController extends Controller
             ];
         }
 
-
         // $lowStockCount = $lowStockProducts->count();
         // if ($lowStockCount > 0) {
         //     $admins = User::role('super_admin')->get();
         //     Notification::send($admins, new LowStockNotification($lowStockProducts));
         // }
-
 
         $this->checkLowStock();
         $lowStockProducts = Product::where('stock', '<=', 5)->get();

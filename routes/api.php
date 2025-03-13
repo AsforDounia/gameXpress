@@ -11,8 +11,11 @@ use App\Http\Controllers\Api\V1\Admin\UserController;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('test', [AuthController::class, 'register']);
 
+// Route::apiResource('v1/admin/products', ProductController::class)->middleware('check.product.manager');
+
 
 Route::prefix('v1')->group(function () {
+
     Route::prefix('admin')->group(function () {
         Route::post('register', [AuthController::class, 'register']);
         Route::post('login', [AuthController::class, 'login']);
@@ -21,5 +24,15 @@ Route::prefix('v1')->group(function () {
             Route::post('logout', [AuthController::class, 'logout']);
             Route::get('dashboard', [DashboardController::class, 'index']);
         });
+    });
+});
+
+
+
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('v1/admin/products', [ProductController::class, 'index']);
+    Route::middleware('check.product.manager')->group(function () {
+        Route::apiResource('v1/admin/products', ProductController::class)->except(['index']);
     });
 });
