@@ -32,7 +32,8 @@ Route::prefix('v1')->group(function () {
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('v1/admin/products', [ProductController::class, 'index']);
+    Route::get('v1/admin/products/{product}', [ProductController::class, 'show']);
     Route::middleware('check.product.manager')->group(function () {
-        Route::apiResource('v1/admin/products', ProductController::class)->except(['index']);
+        Route::apiResource('v1/admin/products', ProductController::class)->except(['index','show']);
     });
 });
