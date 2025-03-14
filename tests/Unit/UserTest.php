@@ -8,6 +8,20 @@ use Tests\TestCase;
 class UserTest extends TestCase
 {
 
+    public function test_users_can_be_listed()
+    {
+        $userManager = User::factory()->create();
+        $userManager->assignRole('user_manager');
+        $this->actingAs($userManager);
+
+        User::factory()->count(3)->create();
+
+        $response = $this->getJson('/api/v1/admin/users');
+        $response->assertStatus(200)
+                ->assertJsonStructure([
+                    '*' => ['id', 'name', 'email', 'created_at', 'updated_at']
+                ]);
+    }
     public function test_a_user_can_be_created()
     {
         $userManager = User::factory()->create();
@@ -15,10 +29,10 @@ class UserTest extends TestCase
         $this->actingAs($userManager);
 
         $data = [
-            'name' => 'Test User 2',
-            'email' => 'testuser2@example.com',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
+            "name" => "Test User 11",
+            "email" => "testuser11@gmail.com",
+            "password" => "password",
+            "password_confirmation" => "password",
         ];
 
         $response = $this->postJson('/api/v1/admin/users', $data);
@@ -32,7 +46,7 @@ class UserTest extends TestCase
                  ]);
 
         $this->assertDatabaseHas('users', [
-            'email' => 'testuser@example.com',
+            'email' => 'testuser11@gmail.com',
         ]);
     }
 
@@ -59,9 +73,10 @@ class UserTest extends TestCase
 
         $user = User::factory()->create();
         $data = [
-            'name' => 'Updated User',
-            'email' => 'updateduser@example.com',
-            'password' => 'newpassword123',
+            'name' => 'Updated User 8',
+            'email' => 'updateduser8@gmail.com',
+            'password' => 'newpassword',
+            'password_confirmation' => 'newpassword',
         ];
 
         $response = $this->putJson('/api/v1/admin/users/' . $user->id, $data);
@@ -72,8 +87,8 @@ class UserTest extends TestCase
                  ]);
 
         $this->assertDatabaseHas('users', [
-            'name' => 'Updated User',
-            'email' => 'updateduser@example.com',
+            'name' => 'Updated User 8',
+            'email' => 'updateduser8@gmail.com',
         ]);
     }
 

@@ -12,14 +12,14 @@ use Spatie\Permission\Models\Role;
 class AuthController extends Controller
 {
     public function register(Request $request){
+
         $fields = $request->validate([
             'name' => 'required|max:255',
             'email' => 'required|email|unique:users',
             'password' => 'required|confirmed'
         ]);
-
         $user = User::create($fields);
-
+       
         if (User::count() === 1) {
             $user->assignRole('super_admin');
         } else {

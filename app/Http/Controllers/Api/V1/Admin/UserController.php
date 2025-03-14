@@ -58,7 +58,7 @@ class UserController extends Controller
         $request->validate([
             'name' => 'sometimes|string|max:255',
             'email' => 'sometimes|email|unique:users,email,' . $id,
-            'password' => 'sometimes|string|min:6',
+            'password' => 'sometimes|string|min:6|confirmed',
         ]);
 
         $user->update($request->all());

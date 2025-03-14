@@ -8,6 +8,24 @@ use Tests\TestCase;
 
 class CategoryTest extends TestCase
 {
+    public function test_categories_can_be_listed()
+    {
+        $user = User::factory()->create();
+        $user->assignRole('product_manager');
+        $this->actingAs($user);
+
+        Category::factory()->count(3)->create();
+
+        $response = $this->getJson('/api/v1/admin/categories');
+
+        $response->assertStatus(200)
+                ->assertJsonStructure([
+                    'categories' => [
+                        '*' => ['id', 'name', 'created_at', 'updated_at']
+                    ]
+                ]);
+    }
+
 
     public function test_a_category_can_be_created()
     {
@@ -16,7 +34,7 @@ class CategoryTest extends TestCase
         $this->actingAs($user);
         $data = [
             'name' => 'Test Category',
-            'slug' => 'test-category',
+            'slug' => 'test-category-slug',
         ];
 
         $response = $this->postJson('/api/v1/admin/categories', $data);
@@ -52,7 +70,7 @@ class CategoryTest extends TestCase
         $category = Category::factory()->create();
         $data = [
             'name' => 'Updated Category',
-            'slug' => 'updated-category',
+            'slug' => 'updated-category-slug',
         ];
 
         $response = $this->putJson('/api/v1/admin/categories/' . $category->id, $data);
