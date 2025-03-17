@@ -46,7 +46,7 @@ class CartController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        
     }
 
     public function checkStock(Request $request)
