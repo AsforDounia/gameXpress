@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api\V2;
 
-use App\Models\cart_items;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
-class CartItemsController extends Controller
+class CartController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -26,7 +26,7 @@ class CartItemsController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(cart_items $cart_items)
+    public function show(string $id)
     {
         //
     }
@@ -34,7 +34,7 @@ class CartItemsController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, cart_items $cart_items)
+    public function update(Request $request, string $id)
     {
         //
     }
@@ -42,7 +42,7 @@ class CartItemsController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(cart_items $cart_items)
+    public function destroy(string $id)
     {
         //
     }
