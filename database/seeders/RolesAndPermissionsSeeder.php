@@ -18,7 +18,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'view_products', 'create_products', 'edit_products', 'delete_products',
             'view_categories', 'create_categories', 'edit_categories', 'delete_categories',
             'view_users', 'create_users', 'edit_users', 'delete_users',
-            'view_dashboard_guest'
+            'view_orders', 'modify_orders',
+            'add_products_to_cart', 'update_quantities_in_cart', 'remove_items_from_cart', 'view_order',
+            'place_orders'
         ];
 
         foreach ($permissions as $permission) {
@@ -29,7 +31,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'super_admin' => $permissions,
             'product_manager' => ['view_products', 'create_products', 'edit_products', 'delete_products'],
             'user_manager' => ['view_users', 'create_users', 'edit_users', 'delete_users'],
-            'guest' => ['view_products'],
+            'manager' => [ 'view_orders', 'modify_orders'],
+            'client' => ['view_products', 'view_categories','add_products_to_cart', 'update_quantities_in_cart', 'remove_items_from_cart', 'view_order','place_orders'],
+            'guest' => ['view_products', 'view_categories','add_products_to_cart', 'update_quantities_in_cart', 'remove_items_from_cart', 'view_order']
         ];
 
         foreach ($roles as $roleName => $rolePermissions) {
