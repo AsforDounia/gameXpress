@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api\V2;
 
 use App\Http\Controllers\Controller;
+use App\Models\Product;
 use Illuminate\Http\Request;
+use Tests\Feature\ProductTest;
 
 class CartController extends Controller
 {
@@ -45,5 +47,19 @@ class CartController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+    public function checkStock(Request $request)
+    {
+        $productId = $request->input('productId');
+        $quantity = $request->input('quantity');
+        $product = Product::find($productId);
+        if (!$product) {
+            return ['status'=>'introvable','message' => 'produit introvable' ];
+        } elseif ($product->stock < $quantity) {
+            return ['status'=>'insufisant','message' => 'stock insufisant', 'stock'=>$product->stock];
+        } else {
+            return  ['status'=>true ,'message' => 'produit trouvable'];
+        }
     }
 }
