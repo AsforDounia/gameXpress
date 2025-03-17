@@ -19,11 +19,11 @@ class AuthController extends Controller
             'password' => 'required|confirmed'
         ]);
         $user = User::create($fields);
-       
+
         if (User::count() === 1) {
             $user->assignRole('super_admin');
         } else {
-            $user->assignRole('guest');
+            $user->assignRole('client');
         }
 
         $token = $user->createToken($request->name);
