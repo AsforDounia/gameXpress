@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V2;
 
 use App\Http\Controllers\Controller;
+use App\Models\CartItem;
 use Illuminate\Http\Request;
 
 class CartController extends Controller
@@ -44,6 +45,6 @@ class CartController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        
     }
 }
