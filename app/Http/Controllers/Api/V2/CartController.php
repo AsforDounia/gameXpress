@@ -43,7 +43,7 @@ class CartController extends Controller
 
         $product = Product::with('productImages')->find($request->product_id);
         // $cartItem = CartItem::create($cartData);
-        
+
         return [
             'cart_Item' => [
                     'product_id' => $product->id,
@@ -89,7 +89,7 @@ class CartController extends Controller
                 ],
             ];
         }
-    
+
 
     /**
      * Display the specified resource.
@@ -112,7 +112,7 @@ class CartController extends Controller
      */
     public function destroy(string $id)
     {
-        
+
     }
 
     public function checkStock($productId, $quantity)
@@ -132,10 +132,31 @@ class CartController extends Controller
 
     public function modifyQuantityProductInCart()
     {
-       
+
     }
     // public function modifyQuantityProductInCart($product, $cart_items)
     // {
     //     $quantity = $cart_items->quantity;
     // }
+
+
+
+    public function destoryProductForUser(Request $request)
+    {
+        $request->validate([
+            'product_id' => 'required|integer',
+        ]);
+
+        $userId = Auth::id();
+        $cartItem = CartItem::where('user_id', $userId)->where('product_id', $request->product_id)->first();
+
+        if (!$cartItem) {
+            return response()->json(['message' => 'Product not found in cart'], 404);
+        }
+
+        $cartItem->delete();
+        return response()->json(['message' => 'Product removed from cart'], 200);
+    }
+
+
 }
