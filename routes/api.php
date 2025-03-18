@@ -50,10 +50,10 @@ Route::prefix('v1')->group(function () {
 
 Route::prefix('v2')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
-        Route::post('/AddToCart', [CartController::class, 'AddToCart']);
+        Route::post('/AddToCart/{product_id}', [CartController::class, 'AddToCart']);
         Route::get('/getCart', [CartController::class, 'getCart']);
     });
-    Route::post('/AddToCart/Guest', [CartController::class, 'AddToCartGuest']);
+    Route::post('/AddToCart/Guest/{product_id}', [CartController::class, 'AddToCart']);
     Route::get('/getCart/Guest', [CartController::class, 'getCartGuest']);
 });
 
