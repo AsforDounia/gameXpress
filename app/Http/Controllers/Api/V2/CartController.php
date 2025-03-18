@@ -32,41 +32,29 @@ class CartController extends Controller
             'product_id' => 'required|exists:products,id',
             'quantity' => 'required|integer|min:1'
         ]);
-        
-        $productStock = $this->checkStock($request->product_id,$request->quantity);
-        
-        if($productStock->getData()->status != 'disponible'){
-            return $productStock;
-        }
-        // return $request;
 
-        // $sessionId = session()->getId();
-        $sessionId = $request->header('X-Session-ID');
-        $cart = session()->get('cart', []);
+        $cartData = [
+            'product_id' => $request->product_id,
+            'quantity' => $request->quantity,
+        ];
+
+        $cartData['user_id'] = null;
+        $cartData['session_id'] = Session::getId();
 
         $product = Product::with('productImages')->find($request->product_id);
-        
-        if (isset($cart[$request->product_id])) {
-            $cart[$request->product_id]['quantity'] += $request->quantity;
-        } else {
-            $cart[$request->product_id] = [
-                'product_id' => $product->id,
-                'quantity' => $request->quantity,
-                'session_id' => $sessionId,
-                'user_id' => null, 
-            ];
-        }
+        // $cartItem = CartItem::create($cartData);
 
-        return [ 
-            'product_id' => $product->id,
-            'quantity' => $request->quantity,
-            'name' => $product->name,
-            'price' => $product->price,
-            'image' => $product->productImages->where('is_primary',true)
-            ];
+        return [
+            'cart_Item' => [
+                    'product_id' => $product->id,
+                    'name' => $product->name,
+                    'price' => $product->price,
+                    'quantity' => $request->quantity,
+                    'image' => $product->productImages->where('is_primary',true)
+        ]];
     }
 
-        public function AddToCart(Request $request)
+        public function addToCart(Request $request)
         {
             // return $request;
             $request->validate([
@@ -75,7 +63,7 @@ class CartController extends Controller
             ]);
             $productStock = $this->checkStock($request->product_id,$request->quantity);
 
-            if($productStock->getData()->status != 'disponible'){
+            if($productStock['status'] != 1){
                 return $productStock;
             }
 
@@ -153,14 +141,14 @@ class CartController extends Controller
 
 
 
-    public function destoryProductForClient(Request $request)
+    public function destroyProductForClient(Request $request,$productId)
     {
-        $request->validate([
-            'product_id' => 'required|integer',
-        ]);
+        // $request->validate([
+        //     'product_id' => 'required|integer',
+        // ]);
 
         $userId = Auth::id();
-        $cartItem = CartItem::where('user_id', $userId)->where('product_id', $request->product_id)->first();
+        $cartItem = CartItem::where('user_id', $userId)->where('product_id', $productId)->first();
 
         if (!$cartItem) {
             return response()->json(['message' => 'Product not found in cart'], 404);
@@ -170,16 +158,16 @@ class CartController extends Controller
         return response()->json(['message' => 'Product removed from cart'], 200);
     }
 
-    public function destoryProductForGuet(Request $request)
+    public function destroyProductForGuet(Request $request,$productId)
     {
-        $request->validate([
-            'product_id' => 'required|integer',
-        ]);
+        // $request->validate([
+        //     'product_id' => 'required|integer',
+        // ]);
 
         $sessionId = $request->header('X-Session-ID');
         $cart = session()->get('cart', []);
-        if ($cart[$request->product_id]['session_id'] == $sessionId) {
-            unset($cart[$request->product_id]);
+        if ($cart[$productId]['session_id'] == $sessionId) {
+            unset($cart[$productId]);
             session()->put('cart', $cart);
             return response()->json(['message' => 'Product removed from cart'], 200);
         }
@@ -189,5 +177,41 @@ class CartController extends Controller
     }
 
 
+    public function calculateTotal(Request $request)
+    {
+        $userId = Auth::id();
+        $cartItems = CartItem::where('user_id', $userId)->with('product')->get();
+
+        if ($cartItems->isEmpty()) {
+            return response()->json(['message' => 'Your cart is empty'], 404);
+        }
+
+        $totalBeforeTax = 0;
+        $totalTax = 0;
+        $totalAfterTax = 0;
+        $totalDiscount = 0;
+
+        $tvaRate = 0.20;
+
+        foreach ($cartItems as $cartItem) {
+            $product = $cartItem->product;
+            $productTotal = $product->price * $cartItem->quantity;
+            $totalBeforeTax += $productTotal;
+            $totalTax += $productTotal * $tvaRate;
+
+            $discount = $product->remise ;
+            $totalDiscount += $productTotal * ($discount / 100);
+            $totalAfterTax += $productTotal + ($productTotal * $tvaRate) - ($productTotal * ($discount / 100));
+        }
+
+
+        return response()->json([
+            'total_before_tax' => number_format($totalBeforeTax, 2),
+            'total_tax' => number_format($totalTax, 2),
+            'total_after_tax' => number_format($totalAfterTax, 2),
+            'total_discount' => number_format($totalDiscount, 2),
+            'total_final' => number_format($totalAfterTax - $totalDiscount, 2)
+        ]);
+    }
 
 }

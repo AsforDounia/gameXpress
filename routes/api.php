@@ -51,8 +51,12 @@ Route::prefix('v1')->group(function () {
 Route::prefix('v2')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/AddToCart', [CartController::class, 'AddToCart']);
+        Route::delete('/destroyProductForClient/{productId}', [CartController::class, 'destroyProductForClient']);
+
     });
+    
     Route::post('/AddToCart/Guest', [CartController::class, 'AddToCartGuest']);
+    Route::delete('/destroyProductForGuet', [CartController::class, 'destroyProductForGuet']);
 });
 
 // Route::post('V2/addToCart', [CartController::class, 'addToCart']);
