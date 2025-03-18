@@ -51,8 +51,10 @@ Route::prefix('v1')->group(function () {
 Route::prefix('v2')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/AddToCart', [CartController::class, 'AddToCart']);
+        Route::get('/getCart', [CartController::class, 'getCart']);
     });
     Route::post('/AddToCart/Guest', [CartController::class, 'AddToCartGuest']);
+    Route::get('/getCart/Guest', [CartController::class, 'getCartGuest']);
 });
 
 // Route::post('V2/addToCart', [CartController::class, 'addToCart']);

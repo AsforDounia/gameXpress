@@ -27,6 +27,7 @@ class CartController extends Controller
     {
         //
     }
+
     public function AddToCartGuest(Request $request){
         $request->validate([
             'product_id' => 'required|exists:products,id',
@@ -47,7 +48,7 @@ class CartController extends Controller
         $product = Product::with('productImages')->find($request->product_id);
         
         if (isset($cart[$request->product_id])) {
-            $cart[$request->product_id]['quantity'] += $request->quantity;
+            return "The product already exists in the cart.";
         } else {
             $cart[$request->product_id] = [
                 'product_id' => $product->id,
@@ -56,6 +57,8 @@ class CartController extends Controller
                 'user_id' => null, 
             ];
         }
+        session()->put('cart',$cart);
+        return (session()->get('cart'));
 
         return [ 
             'product_id' => $product->id,
@@ -66,41 +69,62 @@ class CartController extends Controller
             ];
     }
 
-        public function AddToCart(Request $request)
-        {
-            // return $request;
-            $request->validate([
-                'product_id' => 'required',
-                'quantity' => 'required|integer|min:1',
-            ]);
-            $productStock = $this->checkStock($request->product_id,$request->quantity);
+    public function AddToCart(Request $request)
+    {
+        // return $request;
+        $request->validate([
+            'product_id' => 'required',
+            'quantity' => 'required|integer|min:1',
+        ]);
+        $productStock = $this->checkStock($request->product_id,$request->quantity);
 
-            if($productStock->getData()->status != 'disponible'){
-                return $productStock;
-            }
-
-            $cartData = [
-                'product_id' => $request->product_id,
-                'quantity' => $request->quantity,
-            ];
-
-            $cartData['user_id'] = Auth::id();
-            $cartData['session_id'] = null;
-
-            $cartItem = CartItem::create($cartData);
-
-            $product = Product::with('productImages')->find($request->product_id);
-
-            return [
-                'cart_Item' => [
-                    'product_id' => $product->id,
-                    'name' => $product->name,
-                    'price' => $product->price,
-                    'quantity' => $cartItem->quantity,
-                    'image' => $product->productImages->where('is_primary',true)
-                ],
-            ];
+        if($productStock->getData()->status != 'disponible'){
+            return $productStock;
         }
+
+        // $cartData = [
+        //     'product_id' => $request->product_id,
+        //     'quantity' => $request->quantity,
+        // ];
+        $cartItem = CartItem::where('user_id',Auth::id())
+                ->where('product_id',$request->product_id)
+                ->first();
+
+        $product = Product::with('productImages')->find($request->product_id);
+        
+        if ($cartItem) {
+            return "The product already exists in the cart.";
+        } else {
+            $cartItem = CartItem::create([
+                'product_id' => $product->id,
+                'quantity' => $request->quantity,
+                'user_id' => Auth::id(),
+                'session_id' => null
+            ]);
+        }
+
+        return [
+            'cart_Item' => [
+                'product_id' => $product->id,
+                'name' => $product->name,
+                'price' => $product->price,
+                'quantity' => $cartItem->quantity,
+                'image' => $product->productImages->where('is_primary',true)
+            ],
+        ];
+    }
+
+    public function getCartGuest()
+    {
+            $cart = session()->get('cart', []);
+        return ['cart' => $cart];
+    }
+
+    public function getCart()
+    {
+        $cart = auth()->user() ;
+        return ['cart' => $cart];
+    }
 
 
     /**
