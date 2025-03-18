@@ -32,29 +32,41 @@ class CartController extends Controller
             'product_id' => 'required|exists:products,id',
             'quantity' => 'required|integer|min:1'
         ]);
+        
+        $productStock = $this->checkStock($request->product_id,$request->quantity);
+        
+        if($productStock->getData()->status != 'disponible'){
+            return $productStock;
+        }
+        // return $request;
 
-        $cartData = [
-            'product_id' => $request->product_id,
-            'quantity' => $request->quantity,
-        ];
-
-        $cartData['user_id'] = null;
-        $cartData['session_id'] = Session::getId();
+        // $sessionId = session()->getId();
+        $sessionId = $request->header('X-Session-ID');
+        $cart = session()->get('cart', []);
 
         $product = Product::with('productImages')->find($request->product_id);
-        // $cartItem = CartItem::create($cartData);
+        
+        if (isset($cart[$request->product_id])) {
+            $cart[$request->product_id]['quantity'] += $request->quantity;
+        } else {
+            $cart[$request->product_id] = [
+                'product_id' => $product->id,
+                'quantity' => $request->quantity,
+                'session_id' => $sessionId,
+                'user_id' => null, 
+            ];
+        }
 
-        return [
-            'cart_Item' => [
-                    'product_id' => $product->id,
-                    'name' => $product->name,
-                    'price' => $product->price,
-                    'quantity' => $request->quantity,
-                    'image' => $product->productImages->where('is_primary',true)
-        ]];
+        return [ 
+            'product_id' => $product->id,
+            'quantity' => $request->quantity,
+            'name' => $product->name,
+            'price' => $product->price,
+            'image' => $product->productImages->where('is_primary',true)
+            ];
     }
 
-        public function addToCart(Request $request)
+        public function AddToCart(Request $request)
         {
             // return $request;
             $request->validate([
@@ -63,7 +75,7 @@ class CartController extends Controller
             ]);
             $productStock = $this->checkStock($request->product_id,$request->quantity);
 
-            if($productStock['status'] != 1){
+            if($productStock->getData()->status != 'disponible'){
                 return $productStock;
             }
 
