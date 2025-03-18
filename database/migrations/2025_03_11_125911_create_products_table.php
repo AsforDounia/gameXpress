@@ -19,6 +19,7 @@ return new class extends Migration
             $table->integer('stock');
             $table->enum('status', ['available', 'out_of_stock']);
             $table->foreignId('subcategory_id')->constrained('subcategories');
+            $table->decimal('remise', 4, 2)->default(0)->unsigned()->between(0,100);
             $table->timestamps();
         });
     }
