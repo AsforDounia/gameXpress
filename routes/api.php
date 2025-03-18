@@ -50,7 +50,7 @@ Route::prefix('v1')->group(function () {
 
 Route::prefix('v2')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
-        Route::post('/addToCart', [CartController::class, 'addToCart']);
+        Route::post('/AddToCart', [CartController::class, 'AddToCart']);
     });
     Route::post('/AddToCart/Guest', [CartController::class, 'AddToCartGuest']);
 });
@@ -72,5 +72,5 @@ Route::prefix('v2')->group(function () {
 //     });
 // });
 Route::prefix('v2')->group(function () {
-Route::post('/check-stock', [CartController::class, 'checkStock']);
+Route::post('/check-stock/{productId}/{quantity}', [CartController::class, 'checkStock']);
 });

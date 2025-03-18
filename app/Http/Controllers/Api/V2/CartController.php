@@ -32,12 +32,13 @@ class CartController extends Controller
             'product_id' => 'required|exists:products,id',
             'quantity' => 'required|integer|min:1'
         ]);
-
+        
         $productStock = $this->checkStock($request->product_id,$request->quantity);
-
-        if($productStock['status'] != 1){
+        
+        if($productStock->getData()->status != 'disponible'){
             return $productStock;
         }
+        // return $request;
 
         // $sessionId = session()->getId();
         $sessionId = $request->header('X-Session-ID');
@@ -53,14 +54,19 @@ class CartController extends Controller
                 'quantity' => $request->quantity,
                 'session_id' => $sessionId,
                 'user_id' => null, 
-                'image' => $product->productImages->where('is_primary',true)
             ];
         }
 
-        return ['cart_Item' => $cart];
+        return [ 
+            'product_id' => $product->id,
+            'quantity' => $request->quantity,
+            'name' => $product->name,
+            'price' => $product->price,
+            'image' => $product->productImages->where('is_primary',true)
+            ];
     }
 
-        public function addToCart(Request $request)
+        public function AddToCart(Request $request)
         {
             // return $request;
             $request->validate([
@@ -69,7 +75,7 @@ class CartController extends Controller
             ]);
             $productStock = $this->checkStock($request->product_id,$request->quantity);
 
-            if($productStock['status'] != 1){
+            if($productStock->getData()->status != 'disponible'){
                 return $productStock;
             }
 
@@ -95,7 +101,7 @@ class CartController extends Controller
                 ],
             ];
         }
-    
+
 
     /**
      * Display the specified resource.
@@ -118,22 +124,68 @@ class CartController extends Controller
      */
     public function destroy(string $id)
     {
-        
+
     }
 
-    public function checkStock($productId,$quantity)
+    public function checkStock($productId, $quantity)
     {
-        // $productId = $request->input('productId');
-        // $quantity = $request->input('quantity');
-        // return $productId;
+
         $product = Product::find($productId);
 
         if (!$product) {
-            return ['status'=>'introvable','message' => 'produit introvable' ];
-        } elseif ($product->stock < $quantity) {
-            return ['status'=>'insufisant','message' => 'stock insufisant', 'stock'=>$product->stock];
-        } else {
-            return  ['status'=>true ,'message' => 'produit trouvable'];
+            return response()->json(['status' => 'introuvable', 'message' => 'Produit introuvable'], 404);
+        }
+        if ($product->stock < $quantity) {
+            return response()->json(['status' => 'insuffisant', 'message' => 'Stock insuffisant', 'stock_disponible' => $product->stock], 200);
+        }
+        return response()->json(['status' => 'disponible', 'message' => 'Produit en stock'], 200);
+    }
+
+
+    public function modifyQuantityProductInCart()
+    {
+
+    }
+    // public function modifyQuantityProductInCart($product, $cart_items)
+    // {
+    //     $quantity = $cart_items->quantity;
+    // }
+
+
+
+    public function destoryProductForClient(Request $request)
+    {
+        $request->validate([
+            'product_id' => 'required|integer',
+        ]);
+
+        $userId = Auth::id();
+        $cartItem = CartItem::where('user_id', $userId)->where('product_id', $request->product_id)->first();
+
+        if (!$cartItem) {
+            return response()->json(['message' => 'Product not found in cart'], 404);
+        }
+
+        $cartItem->delete();
+        return response()->json(['message' => 'Product removed from cart'], 200);
+    }
+
+    public function destoryProductForGuet(Request $request)
+    {
+        $request->validate([
+            'product_id' => 'required|integer',
+        ]);
+
+        $sessionId = session()->getId();
+        $cart = session()->get('cart', []);
+        if ($cart[$request->product_id]['session_id'] == $sessionId) {
+            unset($cart[$request->product_id]);
+            session()->put('cart', $cart);
+            return response()->json(['message' => 'Product removed from cart'], 200);
+        }
+        else{
+            return response()->json(['message' => 'Product not found in your cart']);
         }
     }
+
 }
