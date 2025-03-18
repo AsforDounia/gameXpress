@@ -72,5 +72,5 @@ Route::prefix('v2')->group(function () {
 //     });
 // });
 Route::prefix('v2')->group(function () {
-Route::post('/check-stock', [CartController::class, 'checkStock']);
+Route::post('/check-stock/{productId}/{quantity}', [CartController::class, 'checkStock']);
 });
