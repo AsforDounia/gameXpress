@@ -10,6 +10,8 @@ use Tests\Feature\ProductTest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
+
+
 class CartController extends Controller
 {
     /**
@@ -27,7 +29,8 @@ class CartController extends Controller
     {
         //
     }
-    public function AddToCartGuest(Request $request){
+    public function AddToCartGuest(Request $request)
+    {
         $request->validate([
             'product_id' => 'required|exists:products,id',
             'quantity' => 'required|integer|min:1'
@@ -43,53 +46,54 @@ class CartController extends Controller
 
         $product = Product::with('productImages')->find($request->product_id);
         // $cartItem = CartItem::create($cartData);
-        
+
         return [
             'cart_Item' => [
-                    'product_id' => $product->id,
-                    'name' => $product->name,
-                    'price' => $product->price,
-                    'quantity' => $request->quantity,
-                    'image' => $product->productImages->where('is_primary',true)
-        ]];
+                'product_id' => $product->id,
+                'name' => $product->name,
+                'price' => $product->price,
+                'quantity' => $request->quantity,
+                'image' => $product->productImages->where('is_primary', true)
+            ]
+        ];
     }
 
-        public function addToCart(Request $request)
-        {
-            // return $request;
-            $request->validate([
-                'product_id' => 'required',
-                'quantity' => 'required|integer|min:1',
-            ]);
-            $productStock = $this->checkStock($request->product_id,$request->quantity);
+    public function addToCart(Request $request)
+    {
+        // return $request;
+        $request->validate([
+            'product_id' => 'required',
+            'quantity' => 'required|integer|min:1',
+        ]);
+        $productStock = $this->checkStock($request->product_id, $request->quantity);
 
-            if($productStock['status'] != 1){
-                return $productStock;
-            }
-
-            $cartData = [
-                'product_id' => $request->product_id,
-                'quantity' => $request->quantity,
-            ];
-
-            $cartData['user_id'] = Auth::id();
-            $cartData['session_id'] = null;
-
-            $cartItem = CartItem::create($cartData);
-
-            $product = Product::with('productImages')->find($request->product_id);
-
-            return [
-                'cart_Item' => [
-                    'product_id' => $product->id,
-                    'name' => $product->name,
-                    'price' => $product->price,
-                    'quantity' => $cartItem->quantity,
-                    'image' => $product->productImages->where('is_primary',true)
-                ],
-            ];
+        if ($productStock['status'] != 1) {
+            return $productStock;
         }
-    
+
+        $cartData = [
+            'product_id' => $request->product_id,
+            'quantity' => $request->quantity,
+        ];
+
+        $cartData['user_id'] = Auth::id();
+        $cartData['session_id'] = null;
+
+        $cartItem = CartItem::create($cartData);
+
+        $product = Product::with('productImages')->find($request->product_id);
+
+        return [
+            'cart_Item' => [
+                'product_id' => $product->id,
+                'name' => $product->name,
+                'price' => $product->price,
+                'quantity' => $cartItem->quantity,
+                'image' => $product->productImages->where('is_primary', true)
+            ],
+        ];
+    }
+
 
     /**
      * Display the specified resource.
@@ -110,15 +114,12 @@ class CartController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
-    {
-        
-    }
+    public function destroy(string $id) {}
 
     public function checkStock($productId, $quantity)
     {
 
- 
+
         $product = Product::find($productId);
 
         if (!$product) {
@@ -129,10 +130,18 @@ class CartController extends Controller
         }
         return response()->json(['status' => 'disponible', 'message' => 'Produit en stock'], 200);
     }
-    public function modifyQuantityProductInCart()
+    public function modifyQuantityProductInCartUser(Request $request, $cart_itemId)
     {
-       
+        $quantity = $request->input('quantity');
+        $cart_item = CartItem::findOrfail($cart_itemId);
+        $product = Product::where('id',$cart_item->product_id)->firstOrFail();
 
-
+        if($product->stock >= $quantity){
+            $cart_item->update(['quantity' => $quantity]);
+            $cart_item->save();
+            return response()->json(['status' => 'success', 'message' => 'quantité mes a jour avec succees']);
+        }else{
+            return response()->json(['status' => 'erreur', 'message' => 'quantité insufisant']);
+        }
     }
 }
