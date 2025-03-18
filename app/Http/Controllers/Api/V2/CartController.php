@@ -166,8 +166,6 @@ class CartController extends Controller
 
         $sessionId = session()->getId();
         $cart = session()->get('cart', []);
-
-
         if ($cart[$request->product_id]['session_id'] == $sessionId) {
             unset($cart[$request->product_id]);
             session()->put('cart', $cart);
