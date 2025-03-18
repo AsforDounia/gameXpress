@@ -164,7 +164,7 @@ class CartController extends Controller
             'product_id' => 'required|integer',
         ]);
 
-        $sessionId = session()->getId();
+        $sessionId = $request->header('X-Session-ID');
         $cart = session()->get('cart', []);
         if ($cart[$request->product_id]['session_id'] == $sessionId) {
             unset($cart[$request->product_id]);
@@ -175,5 +175,7 @@ class CartController extends Controller
             return response()->json(['message' => 'Product not found in your cart']);
         }
     }
+
+
 
 }
