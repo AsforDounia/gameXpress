@@ -35,10 +35,10 @@ Route::prefix('v1')->group(function () {
                 Route::apiResource('users', UserController::class);
 
             });
-            Route::middleware(['role:super_admin'])->group(function () {
-                Route::apiResource('roles',UserRoleController::class);
+            // Route::middleware(['role:super_admin'])->group(function () {
+            //     Route::apiResource('roles',UserRoleController::class);
 
-            });
+            // });
 
 
 
@@ -53,6 +53,14 @@ Route::prefix('v2')->group(function () {
         Route::post('/AddToCart', [CartController::class, 'AddToCart']);
         Route::delete('/destroyProductForClient/{productId}', [CartController::class, 'destroyProductForClient']);
         Route::post('/calculateTotalForClient', [CartController::class, 'calculateTotalForClient']);
+
+
+
+
+        Route::middleware(['role:super_admin'])->group(function () {
+            Route::apiResource('roles',UserRoleController::class);
+            Route::post('/roles/updateRolePermitions/{roleId}', [UserRoleController::class, 'updateRolePermitions']);
+        });
 
     });
 
