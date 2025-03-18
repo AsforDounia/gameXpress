@@ -141,7 +141,7 @@ class CartController extends Controller
 
 
 
-    public function destoryProductForUser(Request $request)
+    public function destoryProductForClient(Request $request)
     {
         $request->validate([
             'product_id' => 'required|integer',
