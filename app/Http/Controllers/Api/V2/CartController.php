@@ -200,31 +200,7 @@ class CartController extends Controller
             return response()->json(['message' => 'Your cart is empty'], 404);
         }
 
-        $totalBeforeTax = 0;
-        $totalTax = 0;
-        $totalAfterTax = 0;
-        $totalDiscount = 0;
-
-        $tvaRate = 0.20;
-
-        foreach ($cartItems as $cartItem) {
-            $product = $cartItem->product;
-            $productTotal = $product->price * $cartItem->quantity;
-            $totalBeforeTax += $productTotal;
-            $totalTax += $productTotal * $tvaRate;
-            $discount = $product->remise ;
-            $totalDiscount += $productTotal * ($discount / 100);
-            $totalAfterTax += $productTotal + ($productTotal * $tvaRate) - ($productTotal * ($discount / 100));
-        }
-
-
-        return response()->json([
-            'total_before_tax' => number_format($totalBeforeTax, 2),
-            'total_tax' => number_format($totalTax, 2),
-            'total_after_tax' => number_format($totalAfterTax, 2),
-            'total_discount' => number_format($totalDiscount, 2),
-            'total_final' => number_format($totalAfterTax - $totalDiscount, 2)
-        ]);
+        return $this->calculateTotalHelper($cartItems);
     }
 
 
@@ -245,6 +221,11 @@ class CartController extends Controller
             return response()->json(['message' => 'Your cart is empty'], 404);
         }
 
+        return $this->calculateTotalHelper($cartItems);
+    }
+
+    public function calculateTotalHelper($cartItems)
+    {
         $totalBeforeTax = 0;
         $totalTax = 0;
         $totalAfterTax = 0;
@@ -264,11 +245,12 @@ class CartController extends Controller
 
 
         return response()->json([
-            'total_before_tax' => number_format($totalBeforeTax, 2),
-            'total_tax' => number_format($totalTax, 2),
-            'total_after_tax' => number_format($totalAfterTax, 2),
-            'total_discount' => number_format($totalDiscount, 2),
-            'total_final' => number_format($totalAfterTax - $totalDiscount, 2)
+            'total_before_tax' =>$totalBeforeTax,
+            'total_tax' =>$totalTax,
+            'total_after_tax' =>$totalAfterTax,
+            'total_discount' =>$totalDiscount,
+            'total_final' =>$totalAfterTax - $totalDiscount
         ]);
     }
+
 }
