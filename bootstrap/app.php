@@ -24,7 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withSchedule(function (Schedule $schedule) {
-        $schedule->job(new ExpireCartItems)->everyFiveSeconds();
+        $schedule->job(new ExpireCartItems)->hourly();
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
