@@ -118,7 +118,6 @@ class CartController extends Controller
     public function checkStock($productId, $quantity)
     {
 
- 
         $product = Product::find($productId);
 
         if (!$product) {
@@ -129,10 +128,14 @@ class CartController extends Controller
         }
         return response()->json(['status' => 'disponible', 'message' => 'Produit en stock'], 200);
     }
+
+
     public function modifyQuantityProductInCart()
     {
        
-
-
     }
+    // public function modifyQuantityProductInCart($product, $cart_items)
+    // {
+    //     $quantity = $cart_items->quantity;
+    // }
 }
