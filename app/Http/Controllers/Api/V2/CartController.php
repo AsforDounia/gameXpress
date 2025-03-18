@@ -115,7 +115,7 @@ class CartController extends Controller
     public function destroy(string $id) {}
     public function cartMerge(Request $request)
     {
-        $sessionId = $request->cookie('laravel_session');
+        $sessionId = $request->header('X-Session-ID');
         $user = $request->user();
 
         $sessionItems = CartItem::whereNotNull('session_id')
