@@ -115,19 +115,24 @@ class CartController extends Controller
         
     }
 
-    public function checkStock($productId,$quantity)
+    public function checkStock($productId, $quantity)
     {
-        // $productId = $request->input('productId');
-        // $quantity = $request->input('quantity');
-        // return $productId;
+
+ 
         $product = Product::find($productId);
 
         if (!$product) {
-            return ['status'=>'introvable','message' => 'produit introvable' ];
-        } elseif ($product->stock < $quantity) {
-            return ['status'=>'insufisant','message' => 'stock insufisant', 'stock'=>$product->stock];
-        } else {
-            return  ['status'=>true ,'message' => 'produit trouvable'];
+            return response()->json(['status' => 'introuvable', 'message' => 'Produit introuvable'], 404);
         }
+        if ($product->stock < $quantity) {
+            return response()->json(['status' => 'insuffisant', 'message' => 'Stock insuffisant', 'stock_disponible' => $product->stock], 200);
+        }
+        return response()->json(['status' => 'disponible', 'message' => 'Produit en stock'], 200);
+    }
+    public function modifyQuantityProductInCart()
+    {
+       
+
+
     }
 }
