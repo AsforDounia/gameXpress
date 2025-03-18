@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\CartItem;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Tests\Feature\ProductTest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
@@ -40,23 +41,31 @@ class CartController extends Controller
         $cartData['user_id'] = null;
         $cartData['session_id'] = Session::getId();
 
-        CartItem::create($cartData);
-
-        return response()->json(['message' => 'Item added to cart successfully.']);
-
+        $product = Product::with('productImages')->find($request->product_id);
+        // $cartItem = CartItem::create($cartData);
+        
         return [
-            'product_id' => $product->id, 
-            'productImage' => $productImage,
-            'quantity' => $quantity
-        ];
+            'cart_Item' => [
+                    'product_id' => $product->id,
+                    'name' => $product->name,
+                    'price' => $product->price,
+                    'quantity' => $request->quantity,
+                    'image' => $product->productImages->where('is_primary',true)
+        ]];
     }
 
         public function addToCart(Request $request)
         {
+            // return $request;
             $request->validate([
-                'product_id' => 'required|exists:products,id',
+                'product_id' => 'required',
                 'quantity' => 'required|integer|min:1',
             ]);
+            $productStock = $this->checkStock($request->product_id,$request->quantity);
+
+            if($productStock['status'] != 1){
+                return $productStock;
+            }
 
             $cartData = [
                 'product_id' => $request->product_id,
@@ -68,9 +77,9 @@ class CartController extends Controller
 
             $cartItem = CartItem::create($cartData);
 
-            $product = Product::with('images')->find($request->product_id);
+            $product = Product::with('productImages')->find($request->product_id);
 
-            return ['message' => 'Item added to cart successfully.',
+            return [
                 'cart_Item' => [
                     'product_id' => $product->id,
                     'name' => $product->name,
@@ -103,6 +112,22 @@ class CartController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        
+    }
+
+    public function checkStock($productId,$quantity)
+    {
+        // $productId = $request->input('productId');
+        // $quantity = $request->input('quantity');
+        // return $productId;
+        $product = Product::find($productId);
+
+        if (!$product) {
+            return ['status'=>'introvable','message' => 'produit introvable' ];
+        } elseif ($product->stock < $quantity) {
+            return ['status'=>'insufisant','message' => 'stock insufisant', 'stock'=>$product->stock];
+        } else {
+            return  ['status'=>true ,'message' => 'produit trouvable'];
+        }
     }
 }
