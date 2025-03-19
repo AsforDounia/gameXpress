@@ -58,7 +58,7 @@ Route::prefix('v2')->group(function () {
         Route::post('/calculateTotalForClient', [CartController::class, 'calculateTotalofCart']);
     });
     Route::post('/AddToCart/Guest/{product_id}', [CartController::class, 'AddToCart']);
-    Route::get('/getCart/Guest', [CartController::class, 'getCartGuest']);
+    Route::get('/getCart/Guest', [CartController::class, 'getCart']);
 
     Route::post('/AddToCart', [CartController::class, 'AddToCart']);
 
