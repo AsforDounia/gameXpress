@@ -2,9 +2,11 @@
 
 namespace Database\Factories;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Spatie\Permission\Models\Role;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
@@ -32,6 +34,18 @@ class UserFactory extends Factory
         ];
     }
 
+
+    public function withClientRole()
+    {
+        return $this->afterCreating(function (User $user) {
+            $clientRole = Role::where('name', 'client')->where('guard_name', 'sanctum')->first();
+
+            if ($clientRole) {
+                // Attacher le rôle 'client' à l'utilisateur
+                $user->roles()->attach($clientRole);
+            }
+        });
+    }
     /**
      * Indicate that the model's email address should be unverified.
      */

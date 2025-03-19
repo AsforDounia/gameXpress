@@ -11,13 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('payments', function (Blueprint $table) {
+        Schema::create('orders', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('order_id')->constrained()->onDelete('cascade');
-            $table->string('payment_type');
-            $table->string('status');
-            $table->string('transaction_id')->nullable();
-            $table->decimal('amount', 10, 2)->default(0);
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->decimal('total_price');
+            $table->enum('status', ['pending','in progress','shipped', 'canceled'])->default('pending');
             $table->timestamps();
         });
     }
@@ -27,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('payments');
+        Schema::dropIfExists('orders');
     }
 };
