@@ -28,6 +28,7 @@ class CartController extends Controller
         //
     }
 
+
     // public function AddToCartGuest(Request $request){
     //     $request->validate([
     //         'product_id' => 'required|exists:products,id',
@@ -41,9 +42,6 @@ class CartController extends Controller
     //     }
     //     // return $request;
 
-    //     // $sessionId = session()->getId();
-    //     $sessionId = $request->header('X-Session-ID');
-    //     $cart = session()->get('cart', []);
 
     //     $product = Product::with('productImages')->find($request->product_id);
         
@@ -67,6 +65,7 @@ class CartController extends Controller
     //         'image' => $product->productImages->where('is_primary',true)
     //         ];
     // }
+
 
     public function AddToCart(Request $request,$product_id)
     {
@@ -153,39 +152,103 @@ class CartController extends Controller
 
 
 
-    public function destoryProductForClient(Request $request)
+    public function destoryProductForClient($productId)
     {
-        $request->validate([
-            'product_id' => 'required|integer',
-        ]);
-
         $userId = Auth::id();
-        $cartItem = CartItem::where('user_id', $userId)->where('product_id', $request->product_id)->first();
+        $cartItem = CartItem::where('user_id', $userId)->where('product_id', $productId)->first();
 
         if (!$cartItem) {
             return response()->json(['message' => 'Product not found in cart'], 404);
         }
 
         $cartItem->delete();
-        return response()->json(['message' => 'Product removed from cart'], 200);
+        return response()->json([
+            'message' => 'Product removed from your cart',
+            'yourCart' => CartItem::where('user_id', $userId)->get(),
+        ], 200);
     }
 
-    public function destoryProductForGuet(Request $request)
+    public function destroyProductForGuet(Request $request , $productId)
     {
-        $request->validate([
-            'product_id' => 'required|integer',
-        ]);
 
-        $sessionId = session()->getId();
-        $cart = session()->get('cart', []);
-        if ($cart[$request->product_id]['session_id'] == $sessionId) {
-            unset($cart[$request->product_id]);
+        $sessionId = $request->header('X-Session-ID');
+
+        $cart = Session::get('cart');
+
+        if ($cart[$productId]['session_id'] == $sessionId) {
+            unset($cart[$productId]);
             session()->put('cart', $cart);
-            return response()->json(['message' => 'Product removed from cart'], 200);
+            return response()->json([
+                'message' => 'Product removed from your cart',
+                'yourCart' => session()->get('cart', []),
+            ], 200);
         }
         else{
             return response()->json(['message' => 'Product not found in your cart']);
         }
+    }
+
+
+    public function calculateTotalForClient(Request $request)
+    {
+        $userId = Auth::id();
+        $cartItems = CartItem::where('user_id', $userId)->with('product')->get();
+
+        if ($cartItems->isEmpty()) {
+            return response()->json(['message' => 'Your cart is empty'], 404);
+        }
+
+        return $this->calculateTotalHelper($cartItems);
+    }
+
+
+    public function calculateTotalForGuest(Request $request)
+    {
+        $sessionId = $request->header('X-Session-ID');
+
+        $cart = Session::get('cart');
+        if (!$cart) {
+            return response()->json(['message' => 'The cart is empty'], 404);
+        }
+
+        $cartItems = array_filter($cart, function ($cartItem) use ($sessionId) {
+            return $cartItem['session_id'] === $sessionId;
+        });
+
+        if (empty($cartItems)) {
+            return response()->json(['message' => 'Your cart is empty'], 404);
+        }
+
+        return $this->calculateTotalHelper($cartItems);
+    }
+
+    public function calculateTotalHelper($cartItems)
+    {
+        $totalBeforeTax = 0;
+        $totalTax = 0;
+        $totalAfterTax = 0;
+        $totalDiscount = 0;
+
+        $tvaRate = 0.20;
+
+        foreach ($cartItems as $cartItem) {
+            $product = $cartItem->product;
+            $productTotal = $product->price * $cartItem->quantity;
+            $totalBeforeTax += $productTotal;
+            $totalTax += $productTotal * $tvaRate;
+            $discount = $product->remise ;
+            $totalDiscount += $productTotal * ($discount / 100);
+            $totalAfterTax += $productTotal + ($productTotal * $tvaRate) - ($productTotal * ($discount / 100));
+        }
+
+
+        return response()->json([
+            'total_before_tax' =>$totalBeforeTax,
+            'total_tax' =>$totalTax,
+            'total_after_tax' =>$totalAfterTax,
+            'total_discount' =>$totalDiscount,
+            'total_final' =>$totalAfterTax - $totalDiscount
+        ]);
     }
 
 }
