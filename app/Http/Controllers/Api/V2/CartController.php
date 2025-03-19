@@ -32,6 +32,7 @@ class CartController extends Controller
 
 
 
+
     // public function AddToCartGuest(Request $request){
     //     $request->validate([
     //         'product_id' => 'required|exists:products,id',
@@ -159,9 +160,6 @@ class CartController extends Controller
             return response()->json(['status' => 'erreur', 'message' => 'quantité insufisant']);
         }
     } 
-
-   
-   
 
 
     // public function modifyQuantityProductInCart($product, $cart_items)
@@ -305,5 +303,6 @@ class CartController extends Controller
     //         'total_final' =>$totalAfterTax - $totalDiscount
     //     ]);
     // }
+
 
 }
