@@ -74,8 +74,6 @@ Route::prefix('v2')->group(function () {
     Route::post('/AddToCart', [CartController::class, 'AddToCart']);
 
 
-
-
     Route::post('/AddToCart/Guest', [CartController::class, 'AddToCartGuest']);
     Route::delete('/destroyProductForGuet/{productId}', [CartController::class, 'destoryProductFromCart']);
     Route::post('/calculateTotalForGuest', [CartController::class, 'calculateTotalofCart']);
@@ -112,3 +110,5 @@ Route::prefix('v2')->group(function () {
 Route::post('/check-stock/{productId}/{quantity}', [CartController::class, 'checkStock']);
 Route::put('/updatequantity',[CartController::class,'modifyQuantityProductInCartUser']);
 });
+
+Route::post('/checkout', [PaymentController::class, 'createCheckoutSession']);
