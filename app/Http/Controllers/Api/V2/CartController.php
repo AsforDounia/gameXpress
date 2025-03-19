@@ -30,80 +30,94 @@ class CartController extends Controller
         //
     }
 
-
-
-
-    // public function AddToCartGuest(Request $request){
-    //     $request->validate([
-    //         'product_id' => 'required|exists:products,id',
-    //         'quantity' => 'required|integer|min:1'
-    //     ]);
-
-    //     $productStock = $this->checkStock($request->product_id,$request->quantity);
-
-    //     if($productStock->getData()->status != 'disponible'){
-    //         return $productStock;
-    //     }
-    //     // return $request;
-
-
-    //     $product = Product::with('productImages')->find($request->product_id);
-
-    //     if (isset($cart[$request->product_id])) {
-    //         return "The product already exists in the cart.";
-    //     } else {
-    //         $cart[$request->product_id] = [
-    //             'product_id' => $product->id,
-    //             'quantity' => $request->quantity,
-    //             'session_id' => $sessionId,
-    //             'user_id' => null,
-    //         ];
-    //     }
-    //     session()->put('cart',$cart);
-
-    //     return [
-    //         'product_id' => $product->id,
-    //         'quantity' => $request->quantity,
-    //         'name' => $product->name,
-    //         'price' => $product->price,
-    //         'image' => $product->productImages->where('is_primary',true)
-    //         ];
-    // }
-
-
     public function AddToCart(Request $request,$product_id)
     {
         $request->validate([
             'quantity' => 'required|integer|min:1',
         ]);
-        $productStock = $this->checkStock($product_id,$request->quantity);
+        $productStock = $this->checkStock($product_id, $request->quantity);
 
-        if($productStock->getData()->status != 'disponible'){
+        if ($productStock->getData()->status != 'disponible') {
             return $productStock;
         }
         $sessionId = $request->header('X-Session-ID');
 
-        if (Auth::check()){
-                    $cart = CartItem::firstOrCreate([
-                        'user_id' => Auth::id(),
-                        'product_id' => $product_id,
-                        'quantity' => $request->quantity
-                    ]);
-                return ['cart' => $cart];
+        if (Auth::check()) {
+            $cartItem = CartItem::where('user_id', Auth::id())
+            ->where('product_id', $product_id)
+            ->first();
+            if($cartItem){
+                return "the product is already existe";
             }
+            else{
+                $cart = CartItem::firstOrCreate([
+                    'user_id' => Auth::id(),
+                    'product_id' => $product_id,
+                    'quantity' => $request->quantity
+                ]);
+            }
+            return ['cart' => $cart];
+        }
+        $cartItem = CartItem::where('session_id', $sessionId)
+        ->where('product_id', $product_id)
+        ->first();
 
+        if($cartItem){
+            return "the product is already existe";
+        }
+        else{
             $cart = CartItem::firstOrCreate([
                 'session_id' => $sessionId,
                 'product_id' => $product_id,
                 'quantity' => $request->quantity
             ]);
-            return ['cart' => $cart];
+        }
+        return ['cart' => $cart];
     }
 
-    public function getCartGuest()
+    public function getCart(Request $request)
     {
-            $cart = session()->get('cart', []);
-        return ['cart' => $cart];
+        if (Auth::check()) {
+            $cartItems = CartItem::where('user_id', Auth::id())->get();
+        } else {
+            $sessionId = $request->header('X-Session-ID');
+
+            if (!$sessionId) {
+                return ['message' => 'Session ID is required in X-Session-ID header'];
+            }
+
+            $cartItems = CartItem::where('session_id', $sessionId)->get();
+        }
+
+        if ($cartItems->isEmpty()) {
+            return ['message' => 'Cart is empty or session not found'];
+        }
+
+        $items = [];
+
+        foreach ($cartItems as $item) {
+            $product = $item->product;
+
+            $items[] = [
+                'product_id' => $item->product_id,
+                'name' => $product->name,
+                'price' => $product->price,
+                'quantity' => $item->quantity,
+            ];
+        }
+        $totalItems = $cartItems->sum('quantity');
+        $totalPrices = $this->calculateTotalofCart($request);
+        // return $totalPrices;
+        return [
+            'items' => $items,
+            // 'totalCart' => $totalPrices,
+            'total_before_tax' => $totalPrices->getData()->total_before_tax,
+            'total_tax' => $totalPrices->getData()->total_tax,
+            'total_after_tax' => $totalPrices->getData()->total_after_tax,
+            'total_discount' => $totalPrices->getData()->total_discount,
+            'total_final' => $totalPrices->getData()->total_final,
+            'totalItems' => $totalItems
+        ];
     }
 
     /**
@@ -125,7 +139,6 @@ class CartController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-
     public function destroy(string $id)
     {
 
