@@ -22,13 +22,13 @@ Route::prefix('v1')->group(function () {
             Route::get('dashboard', [DashboardController::class, 'index']);
 
 
-            Route::apiResource('products', ProductController::class)->only(['index','show']);
-            Route::apiResource('categories', CategoryController::class)->only(['index','show']);
-            Route::apiResource('subcategories', SubcategoryController::class)->only(['index','show']);
+            Route::apiResource('products', ProductController::class)->only(['index', 'show']);
+            Route::apiResource('categories', CategoryController::class)->only(['index', 'show']);
+            Route::apiResource('subcategories', SubcategoryController::class)->only(['index', 'show']);
             Route::middleware(['role:super_admin|product_manager'])->group(function () {
-                Route::apiResource('products', ProductController::class)->except(['index','show']);
-                Route::apiResource('categories', CategoryController::class)->except(['index','show']);
-                Route::apiResource('subcategories', SubcategoryController::class)->except(['index','show']);
+                Route::apiResource('products', ProductController::class)->except(['index', 'show']);
+                Route::apiResource('categories', CategoryController::class)->except(['index', 'show']);
+                Route::apiResource('subcategories', SubcategoryController::class)->except(['index', 'show']);
             });
 
             Route::middleware(['role:super_admin|user_manager'])->group(function () {
@@ -43,9 +43,11 @@ Route::prefix('v1')->group(function () {
 
 
         });
-
-
     });
+});
+
+Route::prefix('v1/admin')->group(function () {
+    Route::middleware(['auth:sanctum'])->get('/merge', [CartController::class, 'cartMerge']);
 });
 
 Route::prefix('v2')->group(function () {
