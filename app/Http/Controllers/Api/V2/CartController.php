@@ -10,6 +10,8 @@ use Tests\Feature\ProductTest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
+
+
 class CartController extends Controller
 {
     /**
@@ -27,7 +29,8 @@ class CartController extends Controller
     {
         //
     }
-    public function AddToCartGuest(Request $request){
+    public function AddToCartGuest(Request $request)
+    {
         $request->validate([
             'product_id' => 'required|exists:products,id',
             'quantity' => 'required|integer|min:1'
@@ -141,134 +144,22 @@ class CartController extends Controller
         }
         return response()->json(['status' => 'disponible', 'message' => 'Produit en stock'], 200);
     }
-
-
-    public function modifyQuantityProductInCart()
+    public function modifyQuantityProductInCart(Request $request, $cart_itemId)
     {
+        
+        $quantity = $request->input('quantity');
+        $cart_item = CartItem::findOrfail($cart_itemId);
+        $product = Product::where('id',$cart_item->product_id)->firstOrFail();
 
-    }
-    // public function modifyQuantityProductInCart($product, $cart_items)
-    // {
-    //     $quantity = $cart_items->quantity;
-    // }
-
-
-
-    public function destoryProductForClient($productId)
-    {
-        $userId = Auth::id();
-        $cartItem = CartItem::where('user_id', $userId)->where('product_id', $productId)->first();
-
-        if (!$cartItem) {
-            return response()->json(['message' => 'Product not found in cart'], 404);
+        if($product->stock >= $quantity){
+            $cart_item->update(['quantity' => $quantity]);
+            $cart_item->save();
+            return response()->json(['status' => 'success', 'message' => 'quantité mes a jour avec succees']);
+        }else{
+            return response()->json(['status' => 'erreur', 'message' => 'quantité insufisant']);
         }
+    } 
 
-        $cartItem->delete();
-        return response()->json([
-            'message' => 'Product removed from your cart',
-            'yourCart' => CartItem::where('user_id', $userId)->get(),
-        ], 200);
-    }
-
-    public function destroyProductForGuet(Request $request , $productId)
-    {
-
-        $sessionId = $request->header('X-Session-ID');
-
-        $cart = Session::get('cart');
-
-        if ($cart[$productId]['session_id'] == $sessionId) {
-            unset($cart[$productId]);
-            session()->put('cart', $cart);
-            return response()->json([
-                'message' => 'Product removed from your cart',
-                'yourCart' => session()->get('cart', []),
-            ], 200);
-        }
-        else{
-            return response()->json(['message' => 'Product not found in your cart']);
-        }
-    }
-
-
-    public function calculateTotalForClient(Request $request)
-    {
-        $userId = Auth::id();
-        $cartItems = CartItem::where('user_id', $userId)->with('product')->get();
-
-        if ($cartItems->isEmpty()) {
-            return response()->json(['message' => 'Your cart is empty'], 404);
-        }
-
-        $totalBeforeTax = 0;
-        $totalTax = 0;
-        $totalAfterTax = 0;
-        $totalDiscount = 0;
-
-        $tvaRate = 0.20;
-
-        foreach ($cartItems as $cartItem) {
-            $product = $cartItem->product;
-            $productTotal = $product->price * $cartItem->quantity;
-            $totalBeforeTax += $productTotal;
-            $totalTax += $productTotal * $tvaRate;
-            $discount = $product->remise ;
-            $totalDiscount += $productTotal * ($discount / 100);
-            $totalAfterTax += $productTotal + ($productTotal * $tvaRate) - ($productTotal * ($discount / 100));
-        }
-
-
-        return response()->json([
-            'total_before_tax' => number_format($totalBeforeTax, 2),
-            'total_tax' => number_format($totalTax, 2),
-            'total_after_tax' => number_format($totalAfterTax, 2),
-            'total_discount' => number_format($totalDiscount, 2),
-            'total_final' => number_format($totalAfterTax - $totalDiscount, 2)
-        ]);
-    }
-
-
-    public function calculateTotalForGuest(Request $request)
-    {
-        $sessionId = $request->header('X-Session-ID');
-
-        $cart = Session::get('cart');
-        if (!$cart) {
-            return response()->json(['message' => 'The cart is empty'], 404);
-        }
-
-        $cartItems = array_filter($cart, function ($cartItem) use ($sessionId) {
-            return $cartItem['session_id'] === $sessionId;
-        });
-
-        if (empty($cartItems)) {
-            return response()->json(['message' => 'Your cart is empty'], 404);
-        }
-
-        $totalBeforeTax = 0;
-        $totalTax = 0;
-        $totalAfterTax = 0;
-        $totalDiscount = 0;
-
-        $tvaRate = 0.20;
-
-        foreach ($cartItems as $cartItem) {
-            $product = $cartItem->product;
-            $productTotal = $product->price * $cartItem->quantity;
-            $totalBeforeTax += $productTotal;
-            $totalTax += $productTotal * $tvaRate;
-            $discount = $product->remise ;
-            $totalDiscount += $productTotal * ($discount / 100);
-            $totalAfterTax += $productTotal + ($productTotal * $tvaRate) - ($productTotal * ($discount / 100));
-        }
-
-
-        return response()->json([
-            'total_before_tax' => number_format($totalBeforeTax, 2),
-            'total_tax' => number_format($totalTax, 2),
-            'total_after_tax' => number_format($totalAfterTax, 2),
-            'total_discount' => number_format($totalDiscount, 2),
-            'total_final' => number_format($totalAfterTax - $totalDiscount, 2)
-        ]);
-    }
+   
+   
 }
