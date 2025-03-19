@@ -41,6 +41,20 @@ class OrderController extends Controller
         return response()->json($orders);
     }
 
+    // cancel order function
+    public function cancel(string $id)
+    {
+        $order = Order::where('user_id', Auth::id())->findOrFail($id);
+        $order->update(['status' => 'canceled']);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Order has been canceled',
+            'order' => $order
+        ]);
+    }
+
+
     /**
      * Store a newly created resource in storage.
      */
@@ -56,8 +70,8 @@ class OrderController extends Controller
     {
 
         $order = Order::with('orderItems')
-                        ->where('user_id',Auth::id())
-                        ->findOrFail($id);
+            ->where('user_id', Auth::id())
+            ->findOrFail($id);
         return response()->json([
             'status' => 'success',
             'order' => $order
