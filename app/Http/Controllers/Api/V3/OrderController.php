@@ -33,13 +33,12 @@ class OrderController extends Controller
         if ($request->has('customer')) {
             $query->whereHas('user', function ($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->customer . '%')
-                  ->orWhere('email', 'like', '%' . $request->customer . '%');
+                    ->orWhere('email', 'like', '%' . $request->customer . '%');
             });
         }
 
         $orders = $query->orderBy('created_at', 'desc')->paginate(10);
         return response()->json($orders);
-
     }
 
     /**
@@ -55,7 +54,13 @@ class OrderController extends Controller
      */
     public function show(string $id)
     {
-        //
+        
+        $order = Order::findOrFail($id);
+
+        return response()->json([
+            'status' => 'success',
+            'order' => $order
+        ]);
     }
 
     /**

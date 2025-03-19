@@ -24,6 +24,9 @@ class DatabaseSeeder extends Seeder
         Category::factory(10)->create();
         Subcategory::factory(10)->create();
         Product::factory(10)->create();
-        Order::factory()->count(10)->create();
+        Order::factory()
+            ->count(10)
+            ->hasOrderItems(rand(1, 5)) // Adds 1 to 5 order items per order
+            ->create();
     }
 }
