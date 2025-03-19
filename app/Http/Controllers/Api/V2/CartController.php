@@ -142,6 +142,7 @@ class CartController extends Controller
                 'quantity' => $item->quantity,
             ];
         }
+
         return response()->json([
             'items' => $items
         ]);
