@@ -10,6 +10,8 @@ use Tests\Feature\ProductTest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
+
+
 class CartController extends Controller
 {
     /**
@@ -27,6 +29,7 @@ class CartController extends Controller
     {
         //
     }
+
 
 
     // public function AddToCartGuest(Request $request){
@@ -121,6 +124,7 @@ class CartController extends Controller
     /**
      * Remove the specified resource from storage.
      */
+
     public function destroy(string $id)
     {
 
@@ -140,11 +144,26 @@ class CartController extends Controller
         return response()->json(['status' => 'disponible', 'message' => 'Produit en stock'], 200);
     }
 
-
-    public function modifyQuantityProductInCart()
+    public function modifyQuantityProductInCart(Request $request, $cart_itemId)
     {
+        
+        $quantity = $request->input('quantity');
+        $cart_item = CartItem::findOrfail($cart_itemId);
+        $product = Product::where('id',$cart_item->product_id)->firstOrFail();
 
-    }
+        if($product->stock >= $quantity){
+            $cart_item->update(['quantity' => $quantity]);
+            $cart_item->save();
+            return response()->json(['status' => 'success', 'message' => 'quantité mes a jour avec succees']);
+        }else{
+            return response()->json(['status' => 'erreur', 'message' => 'quantité insufisant']);
+        }
+    } 
+
+   
+   
+
+
     // public function modifyQuantityProductInCart($product, $cart_items)
     // {
     //     $quantity = $cart_items->quantity;
