@@ -19,11 +19,25 @@ class AuthController extends Controller
             'password' => 'required|confirmed'
         ]);
         $user = User::create($fields);
+        $superAdminExists = Role::where('name', 'super_admin')->where('guard_name', 'sanctum')->exists();
+        $clientExists = Role::where('name', 'client')->where('guard_name', 'sanctum')->exists();
+
 
         if (User::count() === 1) {
-            $user->assignRole('super_admin');
+            $superAdminRole = Role::where('name', 'super_admin')->where('guard_name', 'sanctum')->first();
+            if ($superAdminRole) {
+                $user->roles()->attach($superAdminRole);
+            }
+            // $user->assignRole(['super_admin', 'sanctum']);
+            // $user->assignRole('super_admin', 'sanctum');
+            // $user->assignRole('super_admin');
         } else {
-            $user->assignRole('client');
+            $clientRole = Role::where('name', 'client')->where('guard_name', 'sanctum')->first();
+            if ($clientRole) {
+                $user->roles()->attach($clientRole);
+            }
+            // $user->assignRole(['client', 'sanctum']);
+            // $user->assignRole('client','sanctum');
         }
 
         $token = $user->createToken($request->name);
