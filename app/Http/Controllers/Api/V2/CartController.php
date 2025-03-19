@@ -118,8 +118,6 @@ class CartController extends Controller
 
     public function checkStock($productId, $quantity)
     {
-
-
         $product = Product::find($productId);
 
         if (!$product) {
@@ -132,6 +130,7 @@ class CartController extends Controller
     }
     public function modifyQuantityProductInCart(Request $request, $cart_itemId)
     {
+        
         $quantity = $request->input('quantity');
         $cart_item = CartItem::findOrfail($cart_itemId);
         $product = Product::where('id',$cart_item->product_id)->firstOrFail();
@@ -143,6 +142,8 @@ class CartController extends Controller
         }else{
             return response()->json(['status' => 'erreur', 'message' => 'quantité insufisant']);
         }
-    }
+    } 
+
+   
    
 }
