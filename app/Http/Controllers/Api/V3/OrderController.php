@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Order;
 use Illuminate\Support\Facades\Auth;
 
+
 class OrderController extends Controller
 {
     /**
@@ -15,13 +16,9 @@ class OrderController extends Controller
     public function index(Request $request)
     {
 
-        // if the user authenticated his role is client return just his orders
-        $userId = Auth::id();
-        return $userId;
-        if ($request->user()->role == 'client') {
-            $query = Order::where('user_id', $request->user()->id)->get();
-        }
-        else{
+        if (Auth::user()->hasRole('client')) {
+            $query = Order::where('user_id', $request->user()->id);
+        } else {
             $query = Order::with('user');
         }
 
@@ -33,17 +30,16 @@ class OrderController extends Controller
             $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
         }
 
-        // Filtrage par client (nom de l'utilisateur)
         if ($request->has('customer')) {
             $query->whereHas('user', function ($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->customer . '%')
-                ->orWhere('email', 'like', '%' . $request->customer . '%');
+                  ->orWhere('email', 'like', '%' . $request->customer . '%');
             });
         }
 
         $orders = $query->orderBy('created_at', 'desc')->paginate(10);
-
         return response()->json($orders);
+
     }
 
     /**
