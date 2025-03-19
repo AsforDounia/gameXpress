@@ -30,47 +30,6 @@ class CartController extends Controller
         //
     }
 
-
-
-
-    // public function AddToCartGuest(Request $request){
-    //     $request->validate([
-    //         'product_id' => 'required|exists:products,id',
-    //         'quantity' => 'required|integer|min:1'
-    //     ]);
-
-    //     $productStock = $this->checkStock($request->product_id,$request->quantity);
-
-    //     if($productStock->getData()->status != 'disponible'){
-    //         return $productStock;
-    //     }
-    //     // return $request;
-
-
-    //     $product = Product::with('productImages')->find($request->product_id);
-
-    //     if (isset($cart[$request->product_id])) {
-    //         return "The product already exists in the cart.";
-    //     } else {
-    //         $cart[$request->product_id] = [
-    //             'product_id' => $product->id,
-    //             'quantity' => $request->quantity,
-    //             'session_id' => $sessionId,
-    //             'user_id' => null,
-    //         ];
-    //     }
-    //     session()->put('cart',$cart);
-
-    //     return [
-    //         'product_id' => $product->id,
-    //         'quantity' => $request->quantity,
-    //         'name' => $product->name,
-    //         'price' => $product->price,
-    //         'image' => $product->productImages->where('is_primary',true)
-    //         ];
-    // }
-
-
     public function AddToCart(Request $request,$product_id)
     {
         $request->validate([
@@ -146,10 +105,19 @@ class CartController extends Controller
                 'quantity' => $item->quantity,
             ];
         }
-
-        return response()->json([
-            'items' => $items
-        ]);
+        $totalItems = $cartItems->sum('quantity');
+        $totalPrices = $this->calculateTotalofCart($request);
+        // return $totalPrices;
+        return [
+            'items' => $items,
+            // 'totalCart' => $totalPrices,
+            'total_before_tax' => $totalPrices->getData()->total_before_tax,
+            'total_tax' => $totalPrices->getData()->total_tax,
+            'total_after_tax' => $totalPrices->getData()->total_after_tax,
+            'total_discount' => $totalPrices->getData()->total_discount,
+            'total_final' => $totalPrices->getData()->total_final,
+            'totalItems' => $totalItems
+        ];
     }
 
     /**
@@ -171,7 +139,10 @@ class CartController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id) {}
+    public function destroy(string $id)
+    {
+
+    }
 
     public function checkStock($productId, $quantity)
     {
