@@ -29,83 +29,96 @@ class CartController extends Controller
     {
         //
     }
-    public function AddToCartGuest(Request $request)
+
+    public function AddToCart(Request $request,$product_id)
     {
         $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|integer|min:1'
+            'quantity' => 'required|integer|min:1',
         ]);
+        $productStock = $this->checkStock($product_id, $request->quantity);
 
-        $productStock = $this->checkStock($request->product_id,$request->quantity);
-
-        if($productStock->getData()->status != 'disponible'){
+        if ($productStock->getData()->status != 'disponible') {
             return $productStock;
         }
-        // return $request;
-
-        // $sessionId = session()->getId();
         $sessionId = $request->header('X-Session-ID');
-        $cart = session()->get('cart', []);
 
-        $product = Product::with('productImages')->find($request->product_id);
-
-        if (isset($cart[$request->product_id])) {
-            $cart[$request->product_id]['quantity'] += $request->quantity;
-        } else {
-            $cart[$request->product_id] = [
-                'product_id' => $product->id,
-                'quantity' => $request->quantity,
-                'session_id' => $sessionId,
-                'user_id' => null,
-            ];
+        if (Auth::check()) {
+            $cartItem = CartItem::where('user_id', Auth::id())
+            ->where('product_id', $product_id)
+            ->first();
+            if($cartItem){
+                return "the product is already existe";
+            }
+            else{
+                $cart = CartItem::firstOrCreate([
+                    'user_id' => Auth::id(),
+                    'product_id' => $product_id,
+                    'quantity' => $request->quantity
+                ]);
+            }
+            return ['cart' => $cart];
         }
+        $cartItem = CartItem::where('session_id', $sessionId)
+        ->where('product_id', $product_id)
+        ->first();
 
-        Session::put('cart', $cart);
-        return [
-            'product_id' => $product->id,
-            'quantity' => $request->quantity,
-            'name' => $product->name,
-            'price' => $product->price,
-            'image' => $product->productImages->where('is_primary',true)
-            ];
+        if($cartItem){
+            return "the product is already existe";
+        }
+        else{
+            $cart = CartItem::firstOrCreate([
+                'session_id' => $sessionId,
+                'product_id' => $product_id,
+                'quantity' => $request->quantity
+            ]);
+        }
+        return ['cart' => $cart];
     }
 
-        public function AddToCart(Request $request)
-        {
-            // return $request;
-            $request->validate([
-                'product_id' => 'required',
-                'quantity' => 'required|integer|min:1',
-            ]);
-            $productStock = $this->checkStock($request->product_id,$request->quantity);
+    public function getCart(Request $request)
+    {
+        if (Auth::check()) {
+            $cartItems = CartItem::where('user_id', Auth::id())->get();
+        } else {
+            $sessionId = $request->header('X-Session-ID');
 
-            if($productStock->getData()->status != 'disponible'){
-                return $productStock;
+            if (!$sessionId) {
+                return ['message' => 'Session ID is required in X-Session-ID header'];
             }
 
-            $cartData = [
-                'product_id' => $request->product_id,
-                'quantity' => $request->quantity,
-            ];
-
-            $cartData['user_id'] = Auth::id();
-            $cartData['session_id'] = null;
-
-            $cartItem = CartItem::create($cartData);
-
-            $product = Product::with('productImages')->find($request->product_id);
-
-            return [
-                'cart_Item' => [
-                    'product_id' => $product->id,
-                    'name' => $product->name,
-                    'price' => $product->price,
-                    'quantity' => $cartItem->quantity,
-                    'image' => $product->productImages->where('is_primary',true)
-                ],
-            ];
+            $cartItems = CartItem::where('session_id', $sessionId)->get();
         }
 
+        if ($cartItems->isEmpty()) {
+            return ['message' => 'Cart is empty or session not found'];
+        }
+
+        $items = [];
+
+        foreach ($cartItems as $item) {
+            $product = $item->product;
+
+            $items[] = [
+                'product_id' => $item->product_id,
+                'name' => $product->name,
+                'price' => $product->price,
+                'quantity' => $item->quantity,
+            ];
+        }
+        $totalItems = $cartItems->sum('quantity');
+        $totalPrices = $this->calculateTotalofCart($request);
+        // return $totalPrices;
+        return [
+            'items' => $items,
+            // 'totalCart' => $totalPrices,
+            'total_before_tax' => $totalPrices->getData()->total_before_tax,
+            'total_tax' => $totalPrices->getData()->total_tax,
+            'total_after_tax' => $totalPrices->getData()->total_after_tax,
+            'total_discount' => $totalPrices->getData()->total_discount,
+            'total_final' => $totalPrices->getData()->total_final,
+            'totalItems' => $totalItems
+        ];
+    }
 
     /**
      * Display the specified resource.
@@ -144,6 +157,7 @@ class CartController extends Controller
         }
         return response()->json(['status' => 'disponible', 'message' => 'Produit en stock'], 200);
     }
+
     public function modifyQuantityProductInCart(Request $request, $cart_itemId)
     {
         
@@ -160,6 +174,148 @@ class CartController extends Controller
         }
     } 
 
-   
-   
+
+    // public function modifyQuantityProductInCart($product, $cart_items)
+    // {
+    //     $quantity = $cart_items->quantity;
+    // }
+
+
+
+    public function destoryProductFromCart(Request $request,$productId)
+    {
+        if (Auth::check()){
+            $userId = Auth::id();
+            $cartItem = CartItem::where('user_id', $userId)->where('product_id', $productId)->first();
+        }
+        else{
+            $sessionId = $request->header('X-Session-ID');
+            $cartItem = CartItem::where('session_id', $sessionId)->where('product_id ', $productId)->first();
+        }
+
+        if (!$cartItem) {
+            return response()->json(['message' => 'Product not found in cart'], 404);
+        }
+
+        $cartItem->delete();
+        return response()->json([
+            'message' => 'Product removed from your cart',
+            'yourCart' => CartItem::where('user_id', $userId)->get(),
+        ], 200);
+    }
+
+    // public function destroyProductForGuet(Request $request , $productId)
+    // {
+
+    //     $sessionId = $request->header('X-Session-ID');
+
+    //     $cart = Session::get('cart');
+
+    //     if ($cart[$productId]['session_id'] == $sessionId) {
+    //         unset($cart[$productId]);
+    //         session()->put('cart', $cart);
+    //         return response()->json([
+    //             'message' => 'Product removed from your cart',
+    //             'yourCart' => session()->get('cart', []),
+    //         ], 200);
+    //     }
+    //     else{
+    //         return response()->json(['message' => 'Product not found in your cart']);
+    //     }
+    // }
+
+
+    public function calculateTotalofCart(Request $request)
+    {
+        if (Auth::check()){
+            $userId = Auth::id();
+            $cartItems = CartItem::where('user_id', $userId)->with('product')->get();
+        }
+        else{
+            $sessionId = $request->header('X-Session-ID');
+            $cartItems = CartItem::where('session_id', $sessionId)->with('product')->get();
+        }
+
+        if ($cartItems->isEmpty()) {
+            return response()->json(['message' => 'Your cart is empty'], 404);
+        }
+
+        $totalBeforeTax = 0;
+        $totalTax = 0;
+        $totalAfterTax = 0;
+        $totalDiscount = 0;
+
+        $tvaRate = 0.20;
+
+        foreach ($cartItems as $cartItem) {
+            $product = $cartItem->product;
+            $productTotal = $product->price * $cartItem->quantity;
+            $totalBeforeTax += $productTotal;
+            $totalTax += $productTotal * $tvaRate;
+            $discount = $product->remise ;
+            $totalDiscount += $productTotal * ($discount / 100);
+            $totalAfterTax += $productTotal + ($productTotal * $tvaRate) - ($productTotal * ($discount / 100));
+        }
+
+
+        return response()->json([
+            'total_before_tax' =>$totalBeforeTax,
+            'total_tax' =>$totalTax,
+            'total_after_tax' =>$totalAfterTax,
+            'total_discount' =>$totalDiscount,
+            'total_final' =>$totalAfterTax - $totalDiscount
+        ]);
+    }
+
+
+    // public function calculateTotalForGuest(Request $request)
+    // {
+    //     $sessionId = $request->header('X-Session-ID');
+
+    //     $cart = Session::get('cart');
+    //     if (!$cart) {
+    //         return response()->json(['message' => 'The cart is empty'], 404);
+    //     }
+
+    //     $cartItems = array_filter($cart, function ($cartItem) use ($sessionId) {
+    //         return $cartItem['session_id'] === $sessionId;
+    //     });
+
+    //     if (empty($cartItems)) {
+    //         return response()->json(['message' => 'Your cart is empty'], 404);
+    //     }
+
+    //     return $this->calculateTotalHelper($cartItems);
+    // }
+
+    // public function calculateTotalHelper($cartItems)
+    // {
+    //     $totalBeforeTax = 0;
+    //     $totalTax = 0;
+    //     $totalAfterTax = 0;
+    //     $totalDiscount = 0;
+
+    //     $tvaRate = 0.20;
+
+    //     foreach ($cartItems as $cartItem) {
+    //         $product = $cartItem->product;
+    //         $productTotal = $product->price * $cartItem->quantity;
+    //         $totalBeforeTax += $productTotal;
+    //         $totalTax += $productTotal * $tvaRate;
+    //         $discount = $product->remise ;
+    //         $totalDiscount += $productTotal * ($discount / 100);
+    //         $totalAfterTax += $productTotal + ($productTotal * $tvaRate) - ($productTotal * ($discount / 100));
+    //     }
+
+
+    //     return response()->json([
+    //         'total_before_tax' =>$totalBeforeTax,
+    //         'total_tax' =>$totalTax,
+    //         'total_after_tax' =>$totalAfterTax,
+    //         'total_discount' =>$totalDiscount,
+    //         'total_final' =>$totalAfterTax - $totalDiscount
+    //     ]);
+    // }
+
+
 }
