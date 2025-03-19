@@ -35,10 +35,10 @@ Route::prefix('v1')->group(function () {
                 Route::apiResource('users', UserController::class);
 
             });
-            Route::middleware(['role:super_admin'])->group(function () {
-                Route::apiResource('roles',UserRoleController::class);
+            // Route::middleware(['role:super_admin'])->group(function () {
+            //     Route::apiResource('roles',UserRoleController::class);
 
-            });
+            // });
 
 
 
@@ -50,9 +50,28 @@ Route::prefix('v1')->group(function () {
 
 Route::prefix('v2')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
-        Route::post('/addToCart', [CartController::class, 'addToCart']);
+
+        Route::post('/AddToCart/{product_id}', [CartController::class, 'AddToCart']);
+        Route::get('/getCart', [CartController::class, 'getCart']);
+
+        Route::delete('/destroyProductForClient/{productId}', [CartController::class, 'destoryProductFromCart']);
+        Route::post('/calculateTotalForClient', [CartController::class, 'calculateTotalofCart']);
     });
+    Route::post('/AddToCart/Guest/{product_id}', [CartController::class, 'AddToCart']);
+    Route::get('/getCart/Guest', [CartController::class, 'getCartGuest']);
+
+    Route::post('/AddToCart', [CartController::class, 'AddToCart']);
+
+
+    Route::middleware(['role:super_admin'])->group(function () {
+        Route::apiResource('roles',UserRoleController::class);
+        Route::post('/roles/updateRolePermitions/{roleId}', [UserRoleController::class, 'updateRolePermitions']);
+    });
+
     Route::post('/AddToCart/Guest', [CartController::class, 'AddToCartGuest']);
+    Route::delete('/destroyProductForGuet/{productId}', [CartController::class, 'destoryProductFromCart']);
+    Route::post('/calculateTotalForGuest', [CartController::class, 'calculateTotalofCart']);
+
 });
 
 // Route::post('V2/addToCart', [CartController::class, 'addToCart']);
