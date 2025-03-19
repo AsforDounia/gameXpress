@@ -96,4 +96,5 @@ Route::prefix('v2')->group(function () {
 // });
 Route::prefix('v2')->group(function () {
 Route::post('/check-stock/{productId}/{quantity}', [CartController::class, 'checkStock']);
+Route::put('/updatequantity',[CartController::class,'modifyQuantityProductInCartUser']);
 });
