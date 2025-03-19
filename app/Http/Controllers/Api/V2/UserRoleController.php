@@ -67,6 +67,49 @@ class UserRoleController extends Controller
         return response()->json(['user' => $user->name, 'roles' => $user->getRoleNames()], 200);
     }
 
+    // update role permission
+    public function updateRolePermitions(Request $request, $roleId)
+    {
+        $request->validate([
+            'permissions' => 'nullable|array',
+            'new_permissions' => 'nullable|array',
+            'new_permissions.*' => 'nullable|string|unique:permissions,name'
+        ]);
+
+
+
+        $role = Role::find($roleId);
+        if (!$role) {
+            return response()->json(['message' => 'Role not found'], 404);
+        }
+        if ($request->filled('new_permissions')) {
+            foreach ($request->new_permissions as $permissionName) {
+                $permission = Permission::create(['name' => $permissionName , 'guard_name' => 'web']);
+            }
+            $role->syncPermissions($request->new_permissions);
+        }
+        if ($request->filled('permissions')) {
+            $filteredPermissions = collect($request->permissions)->filter(fn($value, $key) => $value == 1)->keys()->toArray();
+
+            $validPermissions = Permission::whereIn('name', $filteredPermissions)->pluck('name')->toArray();
+            $role->syncPermissions($validPermissions);
+
+            $filteredPermissionsToDetach = collect($request->permissions)->filter(fn($value, $key) => $value == 0)->keys()->toArray();
+            $validPermissionsToDetach = Permission::whereIn('name', $filteredPermissionsToDetach)->pluck('name')->toArray();
+            foreach ($validPermissionsToDetach as $permission) {
+                $role->revokePermissionTo($permission);
+            }
+        }
+        // return role with his permissions
+        return response()->json([
+            'message' => 'Role permissions updated successfully.',
+            'role' => $role->name, 'permissions' => $role->permissions->pluck('name')
+        ], 200);
+
+    }
+
+
+
     /**
      * Update the specified resource in storage.
      */
