@@ -50,6 +50,13 @@ Route::prefix('v1')->group(function () {
 
 Route::prefix('v2')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
+
+        Route::post('/AddToCart/{product_id}', [CartController::class, 'AddToCart']);
+        Route::get('/getCart', [CartController::class, 'getCart']);
+    });
+    Route::post('/AddToCart/Guest/{product_id}', [CartController::class, 'AddToCart']);
+    Route::get('/getCart/Guest', [CartController::class, 'getCartGuest']);
+
         Route::post('/AddToCart', [CartController::class, 'AddToCart']);
         Route::delete('/destroyProductForClient/{productId}', [CartController::class, 'destroyProductForClient']);
         Route::post('/calculateTotalForClient', [CartController::class, 'calculateTotalForClient']);
@@ -67,6 +74,7 @@ Route::prefix('v2')->group(function () {
     Route::post('/AddToCart/Guest', [CartController::class, 'AddToCartGuest']);
     Route::delete('/destroyProductForGuet/{productId}', [CartController::class, 'destroyProductForGuet']);
     Route::post('/calculateTotalForGuest', [CartController::class, 'calculateTotalForGuest']);
+
 });
 
 // Route::post('V2/addToCart', [CartController::class, 'addToCart']);

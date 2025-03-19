@@ -27,82 +27,80 @@ class CartController extends Controller
     {
         //
     }
-    public function AddToCartGuest(Request $request){
-        $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|integer|min:1'
-        ]);
 
-        $productStock = $this->checkStock($request->product_id,$request->quantity);
+
+    // public function AddToCartGuest(Request $request){
+    //     $request->validate([
+    //         'product_id' => 'required|exists:products,id',
+    //         'quantity' => 'required|integer|min:1'
+    //     ]);
+        
+    //     $productStock = $this->checkStock($request->product_id,$request->quantity);
+        
+    //     if($productStock->getData()->status != 'disponible'){
+    //         return $productStock;
+    //     }
+    //     // return $request;
+
+
+    //     $product = Product::with('productImages')->find($request->product_id);
+        
+    //     if (isset($cart[$request->product_id])) {
+    //         return "The product already exists in the cart.";
+    //     } else {
+    //         $cart[$request->product_id] = [
+    //             'product_id' => $product->id,
+    //             'quantity' => $request->quantity,
+    //             'session_id' => $sessionId,
+    //             'user_id' => null, 
+    //         ];
+    //     }
+    //     session()->put('cart',$cart);
+
+    //     return [ 
+    //         'product_id' => $product->id,
+    //         'quantity' => $request->quantity,
+    //         'name' => $product->name,
+    //         'price' => $product->price,
+    //         'image' => $product->productImages->where('is_primary',true)
+    //         ];
+    // }
+
+
+    public function AddToCart(Request $request,$product_id)
+    {
+        $request->validate([
+            'quantity' => 'required|integer|min:1',
+        ]);
+        $productStock = $this->checkStock($product_id,$request->quantity);
 
         if($productStock->getData()->status != 'disponible'){
             return $productStock;
         }
-        // return $request;
-
-        // $sessionId = session()->getId();
         $sessionId = $request->header('X-Session-ID');
-        $cart = session()->get('cart', []);
-
-        $product = Product::with('productImages')->find($request->product_id);
-
-        if (isset($cart[$request->product_id])) {
-            $cart[$request->product_id]['quantity'] += $request->quantity;
-        } else {
-            $cart[$request->product_id] = [
-                'product_id' => $product->id,
-                'quantity' => $request->quantity,
-                'session_id' => $sessionId,
-                'user_id' => null,
-            ];
-        }
-
-        Session::put('cart', $cart);
-        return [
-            'product_id' => $product->id,
-            'quantity' => $request->quantity,
-            'name' => $product->name,
-            'price' => $product->price,
-            'image' => $product->productImages->where('is_primary',true)
-            ];
-    }
-
-        public function AddToCart(Request $request)
-        {
-            // return $request;
-            $request->validate([
-                'product_id' => 'required',
-                'quantity' => 'required|integer|min:1',
-            ]);
-            $productStock = $this->checkStock($request->product_id,$request->quantity);
-
-            if($productStock->getData()->status != 'disponible'){
-                return $productStock;
+        
+        if (Auth::check()){
+                    $cart = CartItem::firstOrCreate([
+                        'user_id' => Auth::id(),
+                        'product_id' => $product_id,
+                        'quantity' => $request->quantity
+                    ]);
+                return ['cart' => $cart];
             }
 
-            $cartData = [
-                'product_id' => $request->product_id,
-                'quantity' => $request->quantity,
-            ];
+            $cart = CartItem::firstOrCreate([
+                'session_id' => $sessionId,
+                'product_id' => $product_id,
+                'quantity' => $request->quantity
+            ]);
+            return ['cart' => $cart]; 
+    }
 
-            $cartData['user_id'] = Auth::id();
-            $cartData['session_id'] = null;
-
-            $cartItem = CartItem::create($cartData);
-
-            $product = Product::with('productImages')->find($request->product_id);
-
-            return [
-                'cart_Item' => [
-                    'product_id' => $product->id,
-                    'name' => $product->name,
-                    'price' => $product->price,
-                    'quantity' => $cartItem->quantity,
-                    'image' => $product->productImages->where('is_primary',true)
-                ],
-            ];
-        }
-
+    public function getCartGuest()
+    {
+            $cart = session()->get('cart', []);
+        return ['cart' => $cart];
+    }
 
     /**
      * Display the specified resource.
