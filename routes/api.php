@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\Admin\UserController;
 use App\Http\Controllers\Api\V1\Admin\SubcategoryController;
 use App\Http\Controllers\Api\V2\UserRoleController;
 use App\Http\Controllers\Api\V2\CartController;
+use App\Http\Controllers\Api\V3\OrderController;
 use App\Http\Controllers\Api\V3\PaymentController;
 
 Route::prefix('v1')->group(function () {
@@ -84,9 +85,8 @@ Route::prefix('v2')->group(function () {
 
 Route::prefix('v3')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
-        Route::middleware(['role:super_admin|manager|client'])->group(function () {
-            Route::apiResource('orders',PaymentController::class);
-        });
+            Route::apiResource('orders',OrderController::class);
+
     });
 
 
