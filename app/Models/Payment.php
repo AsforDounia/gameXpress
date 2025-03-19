@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class PaymentController extends Model
+class Payment extends Model
 {
     protected $fillable = [
         'order_id',
@@ -14,8 +14,8 @@ class PaymentController extends Model
         'amount',
     ];
 
-    // public function order()
-    // {
-    //     return $this->belongsTo(Order::class);
-    // }
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
+    }
 }
