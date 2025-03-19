@@ -54,7 +54,7 @@ Route::prefix('v2')->group(function () {
         Route::get('/getCart', [CartController::class, 'getCart']);
     });
     Route::post('/AddToCart/Guest/{product_id}', [CartController::class, 'AddToCart']);
-    Route::get('/getCart/Guest', [CartController::class, 'getCartGuest']);
+    Route::get('/getCart/Guest', [CartController::class, 'getCart']);
 });
 
 // Route::post('V2/addToCart', [CartController::class, 'addToCart']);
