@@ -24,7 +24,7 @@ class RolesAndPermissionsSeeder extends Seeder
         ];
 
         foreach ($permissions as $permission) {
-            Permission::firstOrCreate(['name' => $permission]);
+            Permission::firstOrCreate(['name' => $permission , 'guard_name' => 'sanctum']);
         }
 
         $roles = [
@@ -37,7 +37,7 @@ class RolesAndPermissionsSeeder extends Seeder
         ];
 
         foreach ($roles as $roleName => $rolePermissions) {
-            $role = Role::firstOrCreate(['name' => $roleName]);
+            $role = Role::firstOrCreate(['name' => $roleName , 'guard_name' => 'sanctum']);
             $role->syncPermissions($rolePermissions);
         }
 
