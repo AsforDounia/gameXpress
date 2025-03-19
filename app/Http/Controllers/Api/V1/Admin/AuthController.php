@@ -19,10 +19,7 @@ class AuthController extends Controller
             'password' => 'required|confirmed'
         ]);
         $user = User::create($fields);
-        $superAdminExists = Role::where('name', 'super_admin')->where('guard_name', 'sanctum')->exists();
-        $clientExists = Role::where('name', 'client')->where('guard_name', 'sanctum')->exists();
-
-
+        
         if (User::count() === 1) {
             $superAdminRole = Role::where('name', 'super_admin')->where('guard_name', 'sanctum')->first();
             if ($superAdminRole) {
