@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\Admin\UserController;
 use App\Http\Controllers\Api\V1\Admin\SubcategoryController;
 use App\Http\Controllers\Api\V2\UserRoleController;
 use App\Http\Controllers\Api\V2\CartController;
+use App\Http\Controllers\Api\V3\PaymentController;
 
 Route::prefix('v1')->group(function () {
 
@@ -72,8 +73,6 @@ Route::prefix('v2')->group(function () {
     Route::post('/AddToCart', [CartController::class, 'AddToCart']);
 
 
-
-
     Route::post('/AddToCart/Guest', [CartController::class, 'AddToCartGuest']);
     Route::delete('/destroyProductForGuet/{productId}', [CartController::class, 'destoryProductFromCart']);
     Route::post('/calculateTotalForGuest', [CartController::class, 'calculateTotalofCart']);
@@ -100,3 +99,5 @@ Route::prefix('v2')->group(function () {
 Route::post('/check-stock/{productId}/{quantity}', [CartController::class, 'checkStock']);
 Route::put('/updatequantity',[CartController::class,'modifyQuantityProductInCartUser']);
 });
+
+Route::post('/checkout', [PaymentController::class, 'createCheckoutSession']);
