@@ -46,4 +46,8 @@ class PaymentController extends Controller
     {
         //
     }
+    public function TraitementPaiements(Request $request){
+      
+        
+    }
 }
