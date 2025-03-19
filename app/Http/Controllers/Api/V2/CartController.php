@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V2;
 
+use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
 use App\Models\CartItem;
 use Illuminate\Http\Request;
@@ -9,7 +10,6 @@ use App\Models\Product;
 use Tests\Feature\ProductTest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
-
 
 
 class CartController extends Controller
@@ -106,7 +106,7 @@ class CartController extends Controller
             ];
         }
         $totalItems = $cartItems->sum('quantity');
-        $totalPrices = $this->calculateTotalofCart($request);
+        $totalPrices = Helper::calculateTotalHelper($cartItems);
         // return $totalPrices;
         return [
             'items' => $items,
@@ -190,7 +190,7 @@ class CartController extends Controller
 
     public function modifyQuantityProductInCart(Request $request, $cart_itemId)
     {
-        
+
         $quantity = $request->input('quantity');
         $cart_item = CartItem::findOrfail($cart_itemId);
         $product = Product::where('id',$cart_item->product_id)->firstOrFail();
@@ -202,7 +202,7 @@ class CartController extends Controller
         }else{
             return response()->json(['status' => 'erreur', 'message' => 'quantité insufisant']);
         }
-    } 
+    }
 
 
     // public function modifyQuantityProductInCart($product, $cart_items)
@@ -270,31 +270,7 @@ class CartController extends Controller
             return response()->json(['message' => 'Your cart is empty'], 404);
         }
 
-        $totalBeforeTax = 0;
-        $totalTax = 0;
-        $totalAfterTax = 0;
-        $totalDiscount = 0;
-
-        $tvaRate = 0.20;
-
-        foreach ($cartItems as $cartItem) {
-            $product = $cartItem->product;
-            $productTotal = $product->price * $cartItem->quantity;
-            $totalBeforeTax += $productTotal;
-            $totalTax += $productTotal * $tvaRate;
-            $discount = $product->remise ;
-            $totalDiscount += $productTotal * ($discount / 100);
-            $totalAfterTax += $productTotal + ($productTotal * $tvaRate) - ($productTotal * ($discount / 100));
-        }
-
-
-        return response()->json([
-            'total_before_tax' =>$totalBeforeTax,
-            'total_tax' =>$totalTax,
-            'total_after_tax' =>$totalAfterTax,
-            'total_discount' =>$totalDiscount,
-            'total_final' =>$totalAfterTax - $totalDiscount
-        ]);
+        return Helper::calculateTotalHelper($cartItems);
     }
 
 
