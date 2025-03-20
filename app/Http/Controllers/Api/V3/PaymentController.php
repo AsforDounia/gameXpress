@@ -110,7 +110,7 @@ class PaymentController extends Controller
                     'currency' => 'usd',
                     'product_data' => [
                         'name' => $product->name,
-                        'images' => [$product->productImages->where('is_primary', true)->first()],
+                        // 'images' => [$product->productImages->where('is_primary', true)->first()],
                     ],
                     'unit_amount' => intval($product->price * 100),
                 ],
@@ -139,5 +139,55 @@ class PaymentController extends Controller
         return response()->json([
             'session' => $session
         ]);
+    }
+    // $table->enum('status', ['successful','pending','failed']);
+
+    public function success(Request $request)
+    {
+
+        // thanita ntawid session id bach athanar tawi  data 
+        $sessionId = $request->header('X-Stripe-Session-Id');
+        //thanita akhmini tawyard chanhajat n l compte ino 
+        \Stripe\Stripe::setApiKey(env('STRIPE_SECRET'));
+        $session = \Stripe\Checkout\Session::retrieve($sessionId);
+        //thanita 3awth daga itasad zi stript 
+        if ($session->payment_status === 'paid') {
+            //paid=payé
+            //thanita tsaajalar thays l payment najthith 
+            $order = Order::create([
+                'user_id' => Auth::id(),
+                'total_price' => $session->amount_total / 100,
+            ]);
+            $payment = Payment::create([
+                'order_id' => $order->id,
+                'payment_type' => 'stripe',
+                'status' => 'successful',
+                'amount' => $session->amount_total / 100,
+                'session_id' => $session->id,
+            ]);
+            // thanita ntawid minghari thi panier 
+
+            $cartItems = CartItem::where('user_id', Auth::id())->get();
+            foreach ($cartItems as $item) {
+                // $product = Product::find($item->product_id);
+
+                // if ($product) {
+                //     //thanita 9aras 9a stock aba3da 9a tham9ran kh zero o9aras sna9sayi zi stock ino l quantité isghigh 
+                //     $product->stock = max(0, $product->stock - $item->quantity);
+                //     $product->save();
+                // }
+                // thanita mashakhth zi l panier porki safi sghikhth 
+                $item->delete();
+            }
+            return response()->json([
+                'message' => 'Paiement réussi',
+                'session' => $session,
+            ]);
+        } else {
+            return response()->json([
+                'message' => 'Le paiement n est  pas reussi ',
+                'session' => $session
+            ]);
+        }
     }
 }
