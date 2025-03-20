@@ -82,7 +82,9 @@ Route::prefix('v3')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('orders', OrderController::class);
         Route::patch('orders/cancel/{order}', [OrderController::class, 'cancel'])->name('order.cancel');
+
         Route::get('/success', [PaymentController::class, 'success']);
+        Route::post('/checkout', [PaymentController::class, 'createCheckoutSession']);
     });
 });
 
