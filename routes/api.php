@@ -28,6 +28,7 @@ Route::prefix('v1')->group(function () {
             Route::apiResource('categories', CategoryController::class)->only(['index', 'show']);
             Route::apiResource('subcategories', SubcategoryController::class)->only(['index', 'show']);
             Route::middleware(['role:super_admin|product_manager'])->group(function () {
+                Route::get('dashboard', [DashboardController::class, 'index']);
                 Route::apiResource('products', ProductController::class)->except(['index', 'show']);
                 Route::apiResource('categories', CategoryController::class)->except(['index', 'show']);
                 Route::apiResource('subcategories', SubcategoryController::class)->except(['index', 'show']);
@@ -35,7 +36,6 @@ Route::prefix('v1')->group(function () {
 
             Route::middleware(['role:super_admin|user_manager'])->group(function () {
                 Route::apiResource('users', UserController::class);
-
             });
             // Route::middleware(['role:super_admin'])->group(function () {
             //     Route::apiResource('roles',UserRoleController::class);
@@ -62,11 +62,9 @@ Route::prefix('v2')->group(function () {
         Route::post('/calculateTotalForClient', [CartController::class, 'calculateTotalofCart']);
 
         Route::middleware(['role:super_admin'])->group(function () {
-            Route::apiResource('roles',UserRoleController::class);
+            Route::apiResource('roles', UserRoleController::class);
             Route::post('/roles/updateRolePermitions/{roleId}', [UserRoleController::class, 'updateRolePermitions']);
         });
-
-
     });
     Route::post('/AddToCart/Guest/{product_id}', [CartController::class, 'AddToCart']);
     Route::get('/getCart/Guest', [CartController::class, 'getCart']);
@@ -74,22 +72,17 @@ Route::prefix('v2')->group(function () {
     Route::post('/AddToCart', [CartController::class, 'AddToCart']);
 
 
-
-
     Route::post('/AddToCart/Guest', [CartController::class, 'AddToCartGuest']);
     Route::delete('/destroyProductForGuet/{productId}', [CartController::class, 'destoryProductFromCart']);
     Route::post('/calculateTotalForGuest', [CartController::class, 'calculateTotalofCart']);
-
 });
 
 
 Route::prefix('v3')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
-            Route::apiResource('orders',OrderController::class);
-
+        Route::apiResource('orders', OrderController::class);
+        Route::patch('orders/cancel/{order}', [OrderController::class, 'cancel'])->name('order.cancel');
     });
-
-
 });
 
 // Route::post('V2/addToCart', [CartController::class, 'addToCart']);
@@ -109,7 +102,9 @@ Route::prefix('v3')->group(function () {
 //     });
 // });
 Route::prefix('v2')->group(function () {
-Route::post('/check-stock/{productId}/{quantity}', [CartController::class, 'checkStock']);
-Route::put('/updatequantity',[CartController::class,'modifyQuantityProductInCartUser']);
+    Route::post('/check-stock/{productId}/{quantity}', [CartController::class, 'checkStock']);
+    Route::put('/updatequantity', [CartController::class, 'modifyQuantityProductInCartUser']);
 });
 Route::post('/stripe/webhook', [PaymentController::class, 'handleWebhook']);
+
+Route::post('/checkout', [PaymentController::class, 'createCheckoutSession']);

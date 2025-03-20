@@ -9,24 +9,29 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
+
     public function up(): void
     {
-        Schema::create('payments', function (Blueprint $table) {
+        Schema::create('order_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('order_id')->constrained()->onDelete('cascade');
-            $table->string('payment_type');
-            $table->enum('status', ['successful','pending','failed']);
-            $table->string('transaction_id')->nullable();
-            $table->decimal('amount', 10, 2)->default(0);
+            $table->foreignId('product_id')->constrained()->onDelete('cascade');
+            $table->integer('quantity');
+<<<<<<< HEAD
+            $table->decimal('price');
+=======
+            $table->decimal('price'); // Price at the time of order
+>>>>>>> ikram
             $table->timestamps();
         });
     }
+
 
     /**
      * Reverse the migrations.
      */
     public function down(): void
     {
-        Schema::dropIfExists('payments');
+        Schema::dropIfExists('order_items');
     }
 };

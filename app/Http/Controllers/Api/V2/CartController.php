@@ -111,13 +111,14 @@ class CartController extends Controller
         return [
             'items' => $items,
             // 'totalCart' => $totalPrices,
-            'total_before_tax' => $totalPrices->getData()->total_before_tax,
-            'total_tax' => $totalPrices->getData()->total_tax,
-            'total_after_tax' => $totalPrices->getData()->total_after_tax,
-            'total_discount' => $totalPrices->getData()->total_discount,
-            'total_final' => $totalPrices->getData()->total_final,
+            'total_before_tax' => $totalPrices['total_before_tax'],
+            'total_tax' => $totalPrices['total_tax'],
+            'total_after_tax' => $totalPrices['total_after_tax'],
+            'total_discount' => $totalPrices['total_discount'],
+            'total_final' => $totalPrices['total_final'],
             'totalItems' => $totalItems
         ];
+
     }
 
     /**

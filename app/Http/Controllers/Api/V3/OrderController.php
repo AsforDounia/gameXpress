@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V3;
 
+use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Order;
@@ -17,9 +18,9 @@ class OrderController extends Controller
     {
 
         if (Auth::user()->hasRole('client')) {
-            $query = Order::where('user_id', $request->user()->id);
+            $query = Order::where('user_id', $request->user()->id)->with('orderItems');
         } else {
-            $query = Order::with('user');
+            $query = Order::with(['user', 'orderItems']);
         }
 
         if ($request->has('status')) {
@@ -33,14 +34,37 @@ class OrderController extends Controller
         if ($request->has('customer')) {
             $query->whereHas('user', function ($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->customer . '%')
-                  ->orWhere('email', 'like', '%' . $request->customer . '%');
+                    ->orWhere('email', 'like', '%' . $request->customer . '%');
             });
         }
 
         $orders = $query->orderBy('created_at', 'desc')->paginate(10);
-        return response()->json($orders);
 
+        $orders->getCollection()->each(function ($order) {
+            $totals = Helper::calculateTotalHelper($order->orderItems);
+            $order->total_before_tax = $totals['total_before_tax'];
+            $order->total_tax = $totals['total_tax'];
+            $order->total_after_tax = $totals['total_after_tax'];
+            $order->total_discount = $totals['total_discount'];
+            $order->total_final = $totals['total_final'];
+        });
+
+        return response()->json($orders);
     }
+
+    // cancel order function
+    public function cancel(string $id)
+    {
+        $order = Order::where('user_id', Auth::id())->findOrFail($id);
+        $order->update(['status' => 'canceled']);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Order has been canceled',
+            'order' => $order
+        ]);
+    }
+
 
     /**
      * Store a newly created resource in storage.
@@ -55,7 +79,14 @@ class OrderController extends Controller
      */
     public function show(string $id)
     {
-        //
+
+        $order = Order::with('orderItems')
+            ->where('user_id', Auth::id())
+            ->findOrFail($id);
+        return response()->json([
+            'status' => 'success',
+            'order' => $order
+        ]);
     }
 
     /**
@@ -66,11 +97,32 @@ class OrderController extends Controller
         //
     }
 
+    public function updateStatus(Request $request, Order $order)
+    {
+        $request->validate([
+            'status' => 'required|in:pending,in progress,shipped,canceled',
+        ]);
+
+        $order->status = $request->status;
+        $order->save();
+
+        return response()->json([
+            'message' => 'Statut de la commande mis à jour avec succès.',
+            'order' => $order
+        ], 200);
+    }
+
     /**
      * Remove the specified resource from storage.
      */
     public function destroy(string $id)
     {
-        //
+        $order = Order::findOrFail($id);
+        $order->delete();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Order deleted successfully'
+        ]);
     }
 }
