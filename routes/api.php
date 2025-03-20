@@ -10,6 +10,8 @@ use App\Http\Controllers\Api\V1\Admin\UserController;
 use App\Http\Controllers\Api\V1\Admin\SubcategoryController;
 use App\Http\Controllers\Api\V2\UserRoleController;
 use App\Http\Controllers\Api\V2\CartController;
+use App\Http\Controllers\Api\V3\OrderController;
+use App\Http\Controllers\Api\V3\PaymentController;
 
 Route::prefix('v1')->group(function () {
 
@@ -64,7 +66,7 @@ Route::prefix('v2')->group(function () {
             Route::post('/roles/updateRolePermitions/{roleId}', [UserRoleController::class, 'updateRolePermitions']);
         });
 
-        
+
     });
     Route::post('/AddToCart/Guest/{product_id}', [CartController::class, 'AddToCart']);
     Route::get('/getCart/Guest', [CartController::class, 'getCart']);
@@ -77,6 +79,16 @@ Route::prefix('v2')->group(function () {
     Route::post('/AddToCart/Guest', [CartController::class, 'AddToCartGuest']);
     Route::delete('/destroyProductForGuet/{productId}', [CartController::class, 'destoryProductFromCart']);
     Route::post('/calculateTotalForGuest', [CartController::class, 'calculateTotalofCart']);
+
+});
+
+
+Route::prefix('v3')->group(function () {
+    Route::middleware('auth:sanctum')->group(function () {
+            Route::apiResource('orders',OrderController::class);
+
+    });
+
 
 });
 
@@ -100,3 +112,4 @@ Route::prefix('v2')->group(function () {
 Route::post('/check-stock/{productId}/{quantity}', [CartController::class, 'checkStock']);
 Route::put('/updatequantity',[CartController::class,'modifyQuantityProductInCartUser']);
 });
+Route::post('/stripe/webhook', [PaymentController::class, 'handleWebhook']);

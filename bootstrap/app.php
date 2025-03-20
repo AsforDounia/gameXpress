@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'check.product.manager' => CheckProductManagerPermission::class,
             'check.user.manager' => CheckUserManagerPermission::class,
             'role' => RoleMiddleware::class,
+            'Helper' => App\Helpers\Helper::class,
         ]);
     })
     ->withSchedule(function (Schedule $schedule) {
