@@ -24,12 +24,12 @@ class Helper
         }
 
 
-        return response()->json([
+        return [
             'total_before_tax' =>$totalBeforeTax,
             'total_tax' =>$totalTax,
             'total_after_tax' =>$totalAfterTax,
             'total_discount' =>$totalDiscount,
             'total_final' =>$totalAfterTax - $totalDiscount
-        ]);
+        ];
     }
 }
