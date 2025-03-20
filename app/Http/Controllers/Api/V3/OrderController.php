@@ -91,6 +91,12 @@ class OrderController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $order = Order::findOrFail($id);
+        $order->delete();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Order deleted successfully'
+        ]);
     }
 }
