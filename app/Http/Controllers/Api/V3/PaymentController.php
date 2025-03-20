@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V3;
 
+use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
 use App\Models\CartItem;
 use App\Models\Order;
@@ -97,15 +98,17 @@ class PaymentController extends Controller
     }
     public function TraitementPaiements(Request $request) {}
 
+
     public function createCheckoutSession(Request $request)
     {
         \Stripe\Stripe::setApiKey(env('STRIPE_SECRET'));
 
         $cartItems = CartItem::where('user_id', Auth::id())->get();
-        $lineItems = [];
 
-        foreach ($cartItems as $item) {
-            $product = Product::find($item->product_id);
+        $lineItems = [];
+        $totalPrice = Helper::calculateTotalHelper($cartItems);
+        foreach ($cartItems as $cart) {
+            $product = Product::find($cart->product_id);
             $lineItems[] = [
                 'price_data' => [
                     'currency' => 'usd',
@@ -115,33 +118,29 @@ class PaymentController extends Controller
                     ],
                     'unit_amount' => intval($product->price * 100),
                 ],
-                'quantity' => $item->quantity,
+                'quantity' => $cart->quantity,
             ];
         }
-        $session = StripeSession::create([
 
+        $session = StripeSession::create([
             'payment_method_types' => ['card'],
             'line_items' => $lineItems,
-            // [[
-            //     'price_data' => [
-            //         'currency' => 'usd',
-            //         'product_data' => [
-            //             'name' => 'Produit Test',
-            //         ],
-            //         'unit_amount' => 1000, // 10.00$
-            //     ],
-            //     'quantity' => 1,
-            // ]],
             'mode' => 'payment',
             'success_url' => 'http://127.0.0.1:8000/api/sucess',
             'cancel_url' => 'http://127.0.0.1:8000/api/cancel',
+
+            'custom_text' => [
+                'submit' => [
+                    'message' => "Total à payer : " . $totalPrice['total_final']
+                ]
+            ]
         ]);
 
         return response()->json([
-            'session' => $session
+            'session' => $session,
+            'final_price' => $totalPrice['total_final']
         ]);
     }
-    // $table->enum('status', ['successful','pending','failed']);
 
     public function success(Request $request)
     {
