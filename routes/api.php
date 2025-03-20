@@ -28,6 +28,7 @@ Route::prefix('v1')->group(function () {
             Route::apiResource('categories', CategoryController::class)->only(['index', 'show']);
             Route::apiResource('subcategories', SubcategoryController::class)->only(['index', 'show']);
             Route::middleware(['role:super_admin|product_manager'])->group(function () {
+                Route::get('dashboard', [DashboardController::class, 'index']);
                 Route::apiResource('products', ProductController::class)->except(['index', 'show']);
                 Route::apiResource('categories', CategoryController::class)->except(['index', 'show']);
                 Route::apiResource('subcategories', SubcategoryController::class)->except(['index', 'show']);

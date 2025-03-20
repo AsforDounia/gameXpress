@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Category;
 use App\Models\Subcategory;
 use App\Notifications\LowStockNotification;
+use Illuminate\Container\Attributes\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -18,19 +19,6 @@ class DashboardController extends Controller
 {
     public function index()
     {
-
-        if (!auth()->user()->can('view_dashboard')) {
-            return [
-                'status' => 'error',
-                'message' => 'Unauthorized'
-            ];
-        }
-
-        // $lowStockCount = $lowStockProducts->count();
-        // if ($lowStockCount > 0) {
-        //     $admins = User::role('super_admin')->get();
-        //     Notification::send($admins, new LowStockNotification($lowStockProducts));
-        // }
 
         $this->checkLowStock();
         $lowStockProducts = Product::where('stock', '<=', 5)->get();
@@ -55,13 +43,14 @@ class DashboardController extends Controller
     {
         $lowStockProducts = Product::where('stock', '<=', 5)->get();
         $previousLowStockIds = Cache::get('low_stock_products', []);
-
         $newLowStockProducts = $lowStockProducts->whereNotIn('id', $previousLowStockIds);
 
         if ($newLowStockProducts->isNotEmpty()) {
 
-            $admins = User::role('super_admin')->get();
-
+            $users = User::all();
+            $admins = $users->filter(function ($user) {
+                return $user->hasRole('super_admin');
+            });
             $sortedProducts = $newLowStockProducts->merge(
                 $lowStockProducts->whereIn('id', $previousLowStockIds)
             );
