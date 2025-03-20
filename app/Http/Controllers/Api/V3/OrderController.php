@@ -66,6 +66,21 @@ class OrderController extends Controller
         //
     }
 
+    public function updateStatus(Request $request, Order $order)
+    {
+        $request->validate([
+            'status' => 'required|in:pending,in progress,shipped,canceled',
+        ]);
+
+        $order->status = $request->status;
+        $order->save();
+
+        return response()->json([
+            'message' => 'Statut de la commande mis à jour avec succès.',
+            'order' => $order
+        ], 200);
+    }
+
     /**
      * Remove the specified resource from storage.
      */
