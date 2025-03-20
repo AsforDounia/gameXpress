@@ -24,6 +24,7 @@ Route::prefix('v1')->group(function () {
             Route::get('dashboard', [DashboardController::class, 'index']);
 
 
+
             Route::apiResource('products', ProductController::class)->only(['index', 'show']);
             Route::apiResource('categories', CategoryController::class)->only(['index', 'show']);
             Route::apiResource('subcategories', SubcategoryController::class)->only(['index', 'show']);
@@ -85,6 +86,9 @@ Route::prefix('v3')->group(function () {
 
         Route::get('/success', [PaymentController::class, 'success']);
         Route::post('/checkout', [PaymentController::class, 'createCheckoutSession']);
+        Route::get('/payments/{id}', [PaymentController::class, 'show']);
+
+
     });
 });
 
