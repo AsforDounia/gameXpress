@@ -48,7 +48,7 @@ class OrderController extends Controller
             $order->total_discount = $totals['total_discount'];
             $order->total_final = $totals['total_final'];
         });
-        
+
         return response()->json($orders);
     }
 

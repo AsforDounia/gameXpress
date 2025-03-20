@@ -105,5 +105,6 @@ Route::prefix('v2')->group(function () {
     Route::post('/check-stock/{productId}/{quantity}', [CartController::class, 'checkStock']);
     Route::put('/updatequantity', [CartController::class, 'modifyQuantityProductInCartUser']);
 });
+Route::post('/stripe/webhook', [PaymentController::class, 'handleWebhook']);
 
 Route::post('/checkout', [PaymentController::class, 'createCheckoutSession']);
