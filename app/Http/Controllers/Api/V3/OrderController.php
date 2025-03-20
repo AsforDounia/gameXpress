@@ -53,15 +53,12 @@ class OrderController extends Controller
     }
 
     // cancel order function
-    public function cancel(string $id)
+    public function cancel()
     {
-        $order = Order::where('user_id', Auth::id())->findOrFail($id);
-        $order->update(['status' => 'canceled']);
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Order has been canceled',
-            'order' => $order
+            'message' => 'payment has been canceled',
         ]);
     }
 
