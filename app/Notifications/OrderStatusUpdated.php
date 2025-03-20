@@ -16,10 +16,12 @@ class OrderStatusUpdated extends Notification
      * Create a new notification instance.
      */
     protected $order;
+    protected $oldStatus;
 
-    public function __construct(Order $order)
+    public function __construct(Order $order ,$oldStatus)
     {
         $this->order = $order;
+        $this->oldStatus = $oldStatus;
     }
 
     /**
@@ -40,10 +42,10 @@ class OrderStatusUpdated extends Notification
         return (new MailMessage)
             ->subject('Mise à jour de votre commande #' . $this->order->id)
             ->greeting('Bonjour ' . $notifiable->name . ',')
-            ->line('Le statut de votre commande a été mis à jour.')
+            ->line('Le statut de votre commande ' . $this->order->id . ' a été mis à jour.')
+            ->line('Ancien statut : ' . $this->oldStatus)
             ->line('Nouveau statut : ' . ucfirst($this->order->status))
             ->line('Merci pour votre confiance !');
-
     }
 
     /**
