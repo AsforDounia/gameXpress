@@ -10,7 +10,6 @@ use App\Models\Product;
 
 class LowStockNotification extends Notification
 {
-    use Queueable;
 
     protected $products;
 
@@ -32,7 +31,7 @@ class LowStockNotification extends Notification
         ->line('Some products have reached a critical stock level!')
         ->line('Here is the list of affected products:')
         ->line(implode("\n", $this->products->map(function ($product) {
-            return $product->name . ' (Stock: ' . $product->stock . ')';
+            return '//=>' . $product->name . ' (Stock:' . $product->stock .')';
         })->toArray()))
         ->line('Please restock these products as soon as possible.');
 
