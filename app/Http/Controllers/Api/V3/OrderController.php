@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V3;
 
+use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Order;
@@ -17,9 +18,9 @@ class OrderController extends Controller
     {
 
         if (Auth::user()->hasRole('client')) {
-            $query = Order::where('user_id', $request->user()->id);
+            $query = Order::where('user_id', $request->user()->id)->with('orderItems');
         } else {
-            $query = Order::with('user');
+            $query = Order::with(['user', 'orderItems']);
         }
 
         if ($request->has('status')) {
@@ -38,6 +39,16 @@ class OrderController extends Controller
         }
 
         $orders = $query->orderBy('created_at', 'desc')->paginate(10);
+
+        $orders->getCollection()->each(function ($order) {
+            $totals = Helper::calculateTotalHelper($order->orderItems);
+            $order->total_before_tax = $totals['total_before_tax'];
+            $order->total_tax = $totals['total_tax'];
+            $order->total_after_tax = $totals['total_after_tax'];
+            $order->total_discount = $totals['total_discount'];
+            $order->total_final = $totals['total_final'];
+        });
+        
         return response()->json($orders);
     }
 
