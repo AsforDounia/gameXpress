@@ -33,14 +33,27 @@ class OrderController extends Controller
         if ($request->has('customer')) {
             $query->whereHas('user', function ($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->customer . '%')
-                  ->orWhere('email', 'like', '%' . $request->customer . '%');
+                    ->orWhere('email', 'like', '%' . $request->customer . '%');
             });
         }
 
         $orders = $query->orderBy('created_at', 'desc')->paginate(10);
         return response()->json($orders);
-
     }
+
+    // cancel order function
+    public function cancel(string $id)
+    {
+        $order = Order::where('user_id', Auth::id())->findOrFail($id);
+        $order->update(['status' => 'canceled']);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Order has been canceled',
+            'order' => $order
+        ]);
+    }
+
 
     /**
      * Store a newly created resource in storage.
@@ -55,7 +68,14 @@ class OrderController extends Controller
      */
     public function show(string $id)
     {
-        //
+
+        $order = Order::with('orderItems')
+            ->where('user_id', Auth::id())
+            ->findOrFail($id);
+        return response()->json([
+            'status' => 'success',
+            'order' => $order
+        ]);
     }
 
     /**
