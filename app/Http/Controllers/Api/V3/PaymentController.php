@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V3;
 use App\Http\Controllers\Controller;
 use App\Models\CartItem;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Product;
 use Stripe\Webhook;
@@ -169,13 +170,19 @@ class PaymentController extends Controller
 
             $cartItems = CartItem::where('user_id', Auth::id())->get();
             foreach ($cartItems as $item) {
-                // $product = Product::find($item->product_id);
+                $product = Product::find($item->product_id);
 
-                // if ($product) {
-                //     //thanita 9aras 9a stock aba3da 9a tham9ran kh zero o9aras sna9sayi zi stock ino l quantité isghigh 
-                //     $product->stock = max(0, $product->stock - $item->quantity);
-                //     $product->save();
-                // }
+                if ($product) {
+                    OrderItem::create([
+                        'order_id' => $order->id,
+                        'product_id' => $item->product_id,
+                        'quantity' => $item->quantity,
+                        'price' => $product->price * $item->quantity,
+                    ]);
+                }
+
+
+
                 // thanita mashakhth zi l panier porki safi sghikhth 
                 $item->delete();
             }
@@ -190,4 +197,5 @@ class PaymentController extends Controller
             ]);
         }
     }
+    public function dtailles() {}
 }
