@@ -66,11 +66,12 @@ class PaymentController extends Controller
                     'currency' => 'usd',
                     'product_data' => [
                         'name' => $product->name,
-                        'images' => [$product->productImages->where('is_primary', true)->first()],
+                        // 'images' => [$product->productImages->where('is_primary', true)->first()->url],
                     ],
                     'unit_amount' => intval($product->price * 100),
                 ],
                 'quantity' => $item->quantity,
+                ''
             ];
         }
         $session = StripeSession::create([

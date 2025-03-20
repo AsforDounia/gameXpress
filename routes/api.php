@@ -65,6 +65,7 @@ Route::prefix('v2')->group(function () {
             Route::post('/roles/updateRolePermitions/{roleId}', [UserRoleController::class, 'updateRolePermitions']);
         });
 
+        Route::post('/checkout', [PaymentController::class, 'createCheckoutSession']);
         
     });
     Route::post('/AddToCart/Guest/{product_id}', [CartController::class, 'AddToCart']);
@@ -100,4 +101,4 @@ Route::post('/check-stock/{productId}/{quantity}', [CartController::class, 'chec
 Route::put('/updatequantity',[CartController::class,'modifyQuantityProductInCartUser']);
 });
 
-Route::post('/checkout', [PaymentController::class, 'createCheckoutSession']);
+
