@@ -35,14 +35,17 @@ class UserFactory extends Factory
     }
 
 
-    public function withClientRole()
+    public function withRole()
     {
-        return $this->afterCreating(function (User $user) {
-            $clientRole = Role::where('name', 'client')->where('guard_name', 'sanctum')->first();
 
-            if ($clientRole) {
-                // Attacher le rôle 'client' à l'utilisateur
-                $user->roles()->attach($clientRole);
+        return $this->afterCreating(function (User $user) {
+            if (User::count() === 1) {
+                $userRole = Role::where('name', 'super_admin')->where('guard_name', 'sanctum')->first();
+            } else {
+                $userRole = Role::where('name', 'client')->where('guard_name', 'sanctum')->first();
+            }
+            if ($userRole) {
+                $user->roles()->attach($userRole);
             }
         });
     }
