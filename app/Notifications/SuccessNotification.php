@@ -37,7 +37,7 @@ class SuccessNotification extends Notification
      */
     public function toMail($notifiable)
     {
-        if ($notifiable->hasRole('super_admin')) {
+        if ($notifiable->hasRole('super_admin') || $notifiable->hasRole('manager')) {
             return $this->adminEmail();
         }
         return $this->customerEmail();
