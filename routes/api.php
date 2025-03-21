@@ -84,9 +84,9 @@ Route::prefix('v3')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('orders', OrderController::class);
         Route::patch('orders/cancel/{order}', [OrderController::class, 'cancel'])->name('order.cancel');
+        Route::put('orders/updateStatus/{orderId}/{status}', [OrderController::class, 'updateStatus']);
 
         Route::get('/success', [PaymentController::class, 'success']);
-        Route::put('orders/updateStatus/{orderId}/{status}', [OrderController::class, 'updateStatus']);
 
         Route::post('/checkout', [PaymentController::class, 'createCheckoutSession']);
         Route::get('/payments/{id}', [PaymentController::class, 'show']);
