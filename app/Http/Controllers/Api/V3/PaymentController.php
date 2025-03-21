@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Api\V3;
 
+use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
 use App\Models\CartItem;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Product;
 use Stripe\Webhook;
@@ -38,9 +40,18 @@ class PaymentController extends Controller
      */
     public function show(string $id)
     {
-        //
-    }
+        $payment = Payment::with('order.user')->find($id);
 
+        if (!$payment) {
+            return response()->json([
+                'message' => 'Paiement non trouvé.'
+            ], 404);
+        }
+        return response()->json([
+            'payment' => $payment
+        ]);
+    }
+    
     /**
      * Update the specified resource in storage.
      */
@@ -56,88 +67,117 @@ class PaymentController extends Controller
     {
         //
     }
-    public function handleWebhook(Request $request)
-    {
-        $payload = $request->getContent();
-        $sig_header = $request->server('HTTP_STRIPE_SIGNATURE');
-        $secret = env('STRIPE_WEBHOOK_SECRET');
 
-        try {
-            $event = \Stripe\Webhook::constructEvent(
-                $payload,
-                $sig_header,
-                $secret
-            );
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Webhook Error'], 400);
-        }
-
-        if ($event->type === 'checkout.session.completed') {
-            $session = $event->data->object;
-
-            $orderId = $session->metadata->order_id ?? null;
-            if ($orderId) {
-                $order = Order::find($orderId);
-                if ($order) {
-                    Payment::create([
-                        'order_id' => $order->id,
-                        'payment_type' => 'stripe_checkout',
-                        'status' => 'réussi',
-
-                        'transaction_id' => $session->payment_intent,
-                    ]);
-                    //enum('pending','in progress','shipped','canceled')
-                    $order->update(['status' => 'shipped']);
-                }
-            }
-        }
-
-        return response()->json(['status' => 'success']);
-    }
     public function TraitementPaiements(Request $request) {}
+
 
     public function createCheckoutSession(Request $request)
     {
         \Stripe\Stripe::setApiKey(env('STRIPE_SECRET'));
 
         $cartItems = CartItem::where('user_id', Auth::id())->get();
-        $lineItems = [];
 
-        foreach ($cartItems as $item) {
-            $product = Product::find($item->product_id);
+        $lineItems = [];
+        $totalPrice = Helper::calculateTotalHelper($cartItems);
+        foreach ($cartItems as $cart) {
+            $product = Product::find($cart->product_id);
             $lineItems[] = [
                 'price_data' => [
                     'currency' => 'usd',
                     'product_data' => [
                         'name' => $product->name,
-                        'images' => [$product->productImages->where('is_primary', true)->first()],
+                        // 'images' => [$product->productImages->where('is_primary', true)->first()],
                     ],
                     'unit_amount' => intval($product->price * 100),
                 ],
-                'quantity' => $item->quantity,
+                'quantity' => $cart->quantity,
             ];
         }
-        $session = StripeSession::create([
 
+        $session = StripeSession::create([
             'payment_method_types' => ['card'],
             'line_items' => $lineItems,
-            // [[
-            //     'price_data' => [
-            //         'currency' => 'usd',
-            //         'product_data' => [
-            //             'name' => 'Produit Test',
-            //         ],
-            //         'unit_amount' => 1000, // 10.00$
-            //     ],
-            //     'quantity' => 1,
-            // ]],
             'mode' => 'payment',
             'success_url' => 'http://127.0.0.1:8000/api/sucess',
             'cancel_url' => 'http://127.0.0.1:8000/api/cancel',
+
+            'custom_text' => [
+                'submit' => [
+                    'message' => "Total à payer : " . $totalPrice['total_final']
+                ]
+            ]
         ]);
 
-        return response()->json([
-            'session' => $session
+        // ============================================================
+
+        //paid=payé
+        //thanita tsaajalar thays l payment najthith 
+        $order = Order::create([
+            'user_id' => Auth::id(),
+            'total_price' => $session->amount_total / 100,
         ]);
+        $pay = Payment::create([
+            'order_id' => $order->id,
+            'payment_type' => 'stripe',
+            'status' => 'pending',
+            'amount' => $session->amount_total / 100,
+            'session_id' => $session->id,
+        ]);
+        // thanita ntawid minghari thi panier 
+
+        $cartItems = CartItem::where('user_id', Auth::id())->get();
+        foreach ($cartItems as $item) {
+            $product = Product::find($item->product_id);
+
+            if ($product) {
+                OrderItem::create([
+                    'order_id' => $order->id,
+                    'product_id' => $item->product_id,
+                    'quantity' => $item->quantity,
+                    'price' => $product->price * $item->quantity,
+                ]);
+            }
+
+            // thanita mashakhth zi l panier porki safi sghikhth 
+            $item->delete();
+        }
+
+        return response()->json([
+            'session' => $session,
+            'final_price' => $totalPrice['total_final']
+        ]);
+    }
+
+    public function success(Request $request)
+    {
+
+        // thanita ntawid session id bach athanar tawi  data 
+        $sessionId = $request->header('X-Stripe-Session-Id');
+        //thanita akhmini tawyard chanhajat n l compte ino 
+        \Stripe\Stripe::setApiKey(env('STRIPE_SECRET'));
+        $session = \Stripe\Checkout\Session::retrieve($sessionId);
+
+        $payment = Payment::where('session_id', $sessionId)->first();
+
+        if ($payment) {
+            $payment->update(['status' => 'successful']);
+            $order = $payment->order;
+
+            if ($order) {
+                $order->update(['status' => 'in progress']);
+            }
+        }
+        //thanita 3awth daga itasad zi stript 
+        if ($session->payment_status === 'paid') {
+            return response()->json([
+                'message' => 'Paiement réussi',
+                'session' => $session,
+            ]);
+        } else {
+            return response()->json([
+                'message' => 'Le paiement n est  pas reussi ',
+                'session' => $session
+            ]);
+        }
     }
 }

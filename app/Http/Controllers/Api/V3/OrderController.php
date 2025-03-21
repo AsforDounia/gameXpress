@@ -6,6 +6,7 @@ use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Order;
+use App\Notifications\OrderStatusUpdated;
 use Illuminate\Support\Facades\Auth;
 
 
@@ -53,15 +54,12 @@ class OrderController extends Controller
     }
 
     // cancel order function
-    public function cancel(string $id)
+    public function cancel()
     {
-        $order = Order::where('user_id', Auth::id())->findOrFail($id);
-        $order->update(['status' => 'canceled']);
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Order has been canceled',
-            'order' => $order
+            'message' => 'payment has been canceled',
         ]);
     }
 
@@ -92,25 +90,35 @@ class OrderController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function updateStatus($OrderId  , $status)
     {
-        //
-    }
+        $order = Order::where('id', $OrderId)->first();
+        if (!$order) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Order not found'
+            ], 404);
+        }
 
-    public function updateStatus(Request $request, Order $order)
-    {
-        $request->validate([
-            'status' => 'required|in:pending,in progress,shipped,canceled',
-        ]);
+        if (!in_array($status, ['pending', 'in progress', 'shipped', 'canceled'])) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Invalid status'
+            ], 400);
+        }
+        $oldStatus = $order->status;
 
-        $order->status = $request->status;
+        $order->status = $status;
         $order->save();
 
+        $order->user->notify(new OrderStatusUpdated($order,$oldStatus));
         return response()->json([
             'message' => 'Statut de la commande mis à jour avec succès.',
             'order' => $order
         ], 200);
     }
+
+
 
     /**
      * Remove the specified resource from storage.
