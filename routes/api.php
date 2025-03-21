@@ -84,6 +84,9 @@ Route::prefix('v3')->group(function () {
         Route::patch('orders/cancel/{order}', [OrderController::class, 'cancel'])->name('order.cancel');
         Route::put('orders/updateStatus/{orderId}/{status}', [OrderController::class, 'updateStatus']);
 
+        Route::post('/checkout', [PaymentController::class, 'createCheckoutSession']);
+
+
     });
 });
 
@@ -109,4 +112,4 @@ Route::prefix('v2')->group(function () {
 });
 Route::post('/stripe/webhook', [PaymentController::class, 'handleWebhook']);
 
-Route::post('/checkout', [PaymentController::class, 'createCheckoutSession']);
+// Route::post('/checkout', [PaymentController::class, 'createCheckoutSession']);
