@@ -22,9 +22,22 @@ class PaymentController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        if (Auth::user()->hasRole('client')) {
+            $historiquePayment = Payment::whereHas('order', function ($query) {
+                $query->where('user_id', Auth::id());
+            })->with('order.orderItems')->get();
+        } else {
+            $historiquePayment = Payment::with([
+                'order.user', 
+                'order.orderItems' 
+            ])->get();
+        }
+   
+        return [
+            'historique payment' => $historiquePayment,
+        ];
     }
 
     /**

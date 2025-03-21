@@ -90,6 +90,7 @@ Route::prefix('v3')->group(function () {
 
         Route::post('/checkout', [PaymentController::class, 'createCheckoutSession']);
         Route::get('/payments/{id}', [PaymentController::class, 'show']);
+        Route::get('/historiquePayments', [PaymentController::class, 'index']);
 
 
     });
