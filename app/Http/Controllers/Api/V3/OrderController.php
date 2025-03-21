@@ -8,12 +8,65 @@ use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Notifications\OrderStatusUpdated;
 use Illuminate\Support\Facades\Auth;
+use OpenApi\Annotations as OA;
+
+
+/**
+
+ * @OA\Tag(
+ *     name="Orders",
+ *     description="Order Management"
+ * )
+ */
 
 
 class OrderController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * @OA\Get(
+     *     path="/api/v3/orders",
+     *     summary="Get a list of orders",
+     *     description="Retrieve a paginated list of orders. Clients see their own orders, while admins see all orders.",
+     *     tags={"Orders"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="status",
+     *         in="query",
+     *         description="Filter by order status (pending, shipped, etc.)",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="start_date",
+     *         in="query",
+     *         description="Filter orders created after this date (YYYY-MM-DD)",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="end_date",
+     *         in="query",
+     *         description="Filter orders created before this date (YYYY-MM-DD)",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="customer",
+     *         in="query",
+     *         description="Search by customer name or email",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of orders",
+     *         @OA\JsonContent(type="array", @OA\Items(ref="#/components/schemas/Order"))
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
      */
     public function index(Request $request)
     {
@@ -54,15 +107,12 @@ class OrderController extends Controller
     }
 
     // cancel order function
-    public function cancel(string $id)
+    public function cancel()
     {
-        $order = Order::where('user_id', Auth::id())->findOrFail($id);
-        $order->update(['status' => 'canceled']);
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Order has been canceled',
-            'order' => $order
+            'message' => 'payment has been canceled',
         ]);
     }
 
@@ -93,7 +143,7 @@ class OrderController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function updateStatus($OrderId  , $status)
+    public function updateStatus($OrderId, $status)
     {
         $order = Order::where('id', $OrderId)->first();
         if (!$order) {
@@ -114,7 +164,7 @@ class OrderController extends Controller
         $order->status = $status;
         $order->save();
 
-        $order->user->notify(new OrderStatusUpdated($order,$oldStatus));
+        $order->user->notify(new OrderStatusUpdated($order, $oldStatus));
         return response()->json([
             'message' => 'Statut de la commande mis à jour avec succès.',
             'order' => $order
