@@ -176,9 +176,10 @@ class PaymentController extends Controller
             $customer = $order->user;
             $users = User::all();
             $admins = $users->filter(function ($user) {
-                return $user->hasRole('super_admin');
+                return $user->hasRole('super_admin') || $user->hasRole('manager');
+                // return $user->hasRole('super_admin');
             });
-            
+
             $recipients = $admins->push($customer);
 
             Notification::send($recipients, new SuccessNotification($order));
