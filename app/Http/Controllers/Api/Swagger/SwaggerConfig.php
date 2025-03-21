@@ -19,7 +19,8 @@ use OpenApi\Annotations as OA;
  *     securityScheme="sanctum",
  *     type="http",
  *     scheme="bearer",
- *     bearerFormat="JWT"
+ *     bearerFormat="JWT",
+ *     in="header"
  * )
  */
 
