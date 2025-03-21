@@ -66,7 +66,7 @@ Route::prefix('v2')->group(function () {
             Route::apiResource('roles', UserRoleController::class);
             Route::post('/roles/updateRolePermitions/{roleId}', [UserRoleController::class, 'updateRolePermitions']);
         });
-        
+
     });
     Route::post('/AddToCart/Guest/{product_id}', [CartController::class, 'AddToCart']);
     Route::get('/getCart/Guest', [CartController::class, 'getCart']);
@@ -91,7 +91,7 @@ Route::prefix('v3')->group(function () {
 
         Route::post('/checkout', [PaymentController::class, 'createCheckoutSession']);
     });
-    // authentification + admin 
+    // authentification + admin
     Route::prefix('admin')->group(function () {
         Route::get('/payments/{id}', [PaymentController::class, 'show']);
     });
