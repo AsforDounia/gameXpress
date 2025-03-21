@@ -67,7 +67,7 @@ class PaymentController extends Controller
     {
         //
     }
-  
+
     public function TraitementPaiements(Request $request) {}
 
 
@@ -108,6 +108,40 @@ class PaymentController extends Controller
             ]
         ]);
 
+        // ============================================================
+
+        //paid=payé
+        //thanita tsaajalar thays l payment najthith 
+        $order = Order::create([
+            'user_id' => Auth::id(),
+            'total_price' => $session->amount_total / 100,
+        ]);
+        $pay = Payment::create([
+            'order_id' => $order->id,
+            'payment_type' => 'stripe',
+            'status' => 'pending',
+            'amount' => $session->amount_total / 100,
+            'session_id' => $session->id,
+        ]);
+        // thanita ntawid minghari thi panier 
+
+        $cartItems = CartItem::where('user_id', Auth::id())->get();
+        foreach ($cartItems as $item) {
+            $product = Product::find($item->product_id);
+
+            if ($product) {
+                OrderItem::create([
+                    'order_id' => $order->id,
+                    'product_id' => $item->product_id,
+                    'quantity' => $item->quantity,
+                    'price' => $product->price * $item->quantity,
+                ]);
+            }
+
+            // thanita mashakhth zi l panier porki safi sghikhth 
+            $item->delete();
+        }
+
         return response()->json([
             'session' => $session,
             'final_price' => $totalPrice['total_final']
@@ -122,41 +156,19 @@ class PaymentController extends Controller
         //thanita akhmini tawyard chanhajat n l compte ino 
         \Stripe\Stripe::setApiKey(env('STRIPE_SECRET'));
         $session = \Stripe\Checkout\Session::retrieve($sessionId);
+
+        $payment = Payment::where('session_id', $sessionId)->first();
+
+        if ($payment) {
+            $payment->update(['status' => 'successful']);
+            $order = $payment->order;
+
+            if ($order) {
+                $order->update(['status' => 'in progress']);
+            }
+        }
         //thanita 3awth daga itasad zi stript 
         if ($session->payment_status === 'paid') {
-            //paid=payé
-            //thanita tsaajalar thays l payment najthith 
-            $order = Order::create([
-                'user_id' => Auth::id(),
-                'total_price' => $session->amount_total / 100,
-            ]);
-            $payment = Payment::create([
-                'order_id' => $order->id,
-                'payment_type' => 'stripe',
-                'status' => 'successful',
-                'amount' => $session->amount_total / 100,
-                'session_id' => $session->id,
-            ]);
-            // thanita ntawid minghari thi panier 
-
-            $cartItems = CartItem::where('user_id', Auth::id())->get();
-            foreach ($cartItems as $item) {
-                $product = Product::find($item->product_id);
-
-                if ($product) {
-                    OrderItem::create([
-                        'order_id' => $order->id,
-                        'product_id' => $item->product_id,
-                        'quantity' => $item->quantity,
-                        'price' => $product->price * $item->quantity,
-                    ]);
-                }
-
-
-
-                // thanita mashakhth zi l panier porki safi sghikhth 
-                $item->delete();
-            }
             return response()->json([
                 'message' => 'Paiement réussi',
                 'session' => $session,
