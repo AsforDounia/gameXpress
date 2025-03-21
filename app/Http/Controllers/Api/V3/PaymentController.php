@@ -9,11 +9,15 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Product;
+use App\Models\User;
+use App\Notifications\SuccessNotification;
 use Stripe\Webhook;
 
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Notification;
+use Spatie\Permission\Models\Role;
 use Stripe\Stripe;
 use Stripe\Checkout\Session as StripeSession;
 
@@ -169,6 +173,15 @@ class PaymentController extends Controller
         }
         //thanita 3awth daga itasad zi stript
         if ($session->payment_status === 'paid') {
+            $customer = $order->user;
+            $users = User::all();
+            $admins = $users->filter(function ($user) {
+                return $user->hasRole('super_admin');
+            });
+            
+            $recipients = $admins->push($customer);
+
+            Notification::send($recipients, new SuccessNotification($order));
             return response()->json([
                 'message' => 'Paiement réussi',
                 'session' => $session,
