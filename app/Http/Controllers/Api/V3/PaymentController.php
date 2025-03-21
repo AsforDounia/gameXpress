@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V3;
 
+use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
 use App\Models\CartItem;
 use App\Models\Order;
@@ -96,48 +97,92 @@ class PaymentController extends Controller
     }
     public function TraitementPaiements(Request $request) {}
 
+    // public function createCheckoutSession(Request $request)
+    // {
+    //     \Stripe\Stripe::setApiKey(env('STRIPE_SECRET'));
+
+    //     $cartItems = CartItem::where('user_id', Auth::id())->get();
+    //     $lineItems = [];
+
+    //     foreach ($cartItems as $item) {
+    //         $product = Product::find($item->product_id);
+    //         $lineItems[] = [
+    //             'price_data' => [
+    //                 'currency' => 'usd',
+    //                 'product_data' => [
+    //                     'name' => $product->name,
+    //                     'images' => [$product->productImages->where('is_primary', true)->first()],
+    //                 ],
+    //                 'unit_amount' => intval($product->price * 100),
+    //             ],
+    //             'quantity' => $item->quantity,
+    //         ];
+    //     }
+    //     $session = StripeSession::create([
+
+    //         'payment_method_types' => ['card'],
+    //         'line_items' => $lineItems,
+    //         // [[
+    //         //     'price_data' => [
+    //         //         'currency' => 'usd',
+    //         //         'product_data' => [
+    //         //             'name' => 'Produit Test',
+    //         //         ],
+    //         //         'unit_amount' => 1000, // 10.00$
+    //         //     ],
+    //         //     'quantity' => 1,
+    //         // ]],
+    //         'mode' => 'payment',
+    //         'success_url' => 'http://127.0.0.1:8000/api/sucess',
+    //         'cancel_url' => 'http://127.0.0.1:8000/api/cancel',
+    //     ]);
+
+    //     return response()->json([
+    //         'session' => $session
+    //     ]);
+    // }
+
+
     public function createCheckoutSession(Request $request)
     {
         \Stripe\Stripe::setApiKey(env('STRIPE_SECRET'));
 
         $cartItems = CartItem::where('user_id', Auth::id())->get();
-        $lineItems = [];
 
-        foreach ($cartItems as $item) {
-            $product = Product::find($item->product_id);
+        $lineItems = [];
+        $totalPrice = Helper::calculateTotalHelper($cartItems);
+
+        foreach ($cartItems as $cart) {
+            $product = Product::find($cart->product_id);
             $lineItems[] = [
                 'price_data' => [
                     'currency' => 'usd',
                     'product_data' => [
                         'name' => $product->name,
-                        'images' => [$product->productImages->where('is_primary', true)->first()],
+                        // 'images' => [$product->productImages->where('is_primary', true)->first()->url],
                     ],
                     'unit_amount' => intval($product->price * 100),
                 ],
-                'quantity' => $item->quantity,
+                'quantity' => $cart->quantity,
             ];
         }
-        $session = StripeSession::create([
 
+        // Calculate the total price using Helper function
+
+        $session = StripeSession::create([
             'payment_method_types' => ['card'],
             'line_items' => $lineItems,
-            // [[
-            //     'price_data' => [
-            //         'currency' => 'usd',
-            //         'product_data' => [
-            //             'name' => 'Produit Test',
-            //         ],
-            //         'unit_amount' => 1000, // 10.00$
-            //     ],
-            //     'quantity' => 1,
-            // ]],
             'mode' => 'payment',
             'success_url' => 'http://127.0.0.1:8000/api/sucess',
             'cancel_url' => 'http://127.0.0.1:8000/api/cancel',
+            'metadata' => [
+                'totalPrice' => $totalPrice['total_final'], // Sending total final amount
+            ]
         ]);
 
         return response()->json([
-            'session' => $session
+            'session' => $session,
+            'total_price' => $totalPrice['total_final'] // Include total price in response
         ]);
     }
 }
