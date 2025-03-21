@@ -51,7 +51,7 @@ class PaymentController extends Controller
             'payment' => $payment
         ]);
     }
-
+    
     /**
      * Update the specified resource in storage.
      */
@@ -180,5 +180,4 @@ class PaymentController extends Controller
             ]);
         }
     }
-    public function dtailles() {}
 }
