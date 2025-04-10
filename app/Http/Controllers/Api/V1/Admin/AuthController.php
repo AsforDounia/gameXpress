@@ -59,13 +59,7 @@ class AuthController extends Controller
         $user = User::create($fields);
 
         if (User::count() === 1) {
-            $superAdminRole = Role::where('name', 'super_admin')->where('guard_name', 'sanctum')->first();
-            if ($superAdminRole) {
-                $user->roles()->attach($superAdminRole);
-            }
-            // $user->assignRole(['super_admin', 'sanctum']);
-            // $user->assignRole('super_admin', 'sanctum');
-            // $user->assignRole('super_admin');
+            $user->assignRole('super_admin');
         } else {
             $clientRole = Role::where('name', 'client')->where('guard_name', 'sanctum')->first();
             if ($clientRole) {

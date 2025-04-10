@@ -12,13 +12,15 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable,HasApiTokens , HasRoles;
+    use HasFactory, Notifiable, HasApiTokens, HasRoles;
 
     /**
      * The attributes that are mass assignable.
      *
      * @var list<string>
      */
+
+    public $guard_name = "sanctum";
     protected $fillable = [
         'name',
         'email',
@@ -48,10 +50,12 @@ class User extends Authenticatable
         ];
     }
 
-    public function product(){
+    public function product()
+    {
         return $this->belongsToMany(Product::class);
     }
-    public function order(){
+    public function order()
+    {
         return $this->hasMany(Order::class);
     }
 }
