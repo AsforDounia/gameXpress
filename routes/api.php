@@ -24,6 +24,7 @@ Route::prefix('v1')->group(function () {
             Route::get('dashboard', [DashboardController::class, 'index']);
 
 
+            Route::get('user', [AuthController::class, 'usertest']);
 
             Route::apiResource('products', ProductController::class)->only(['index', 'show']);
             Route::apiResource('categories', CategoryController::class)->only(['index', 'show']);
@@ -66,7 +67,6 @@ Route::prefix('v2')->group(function () {
             Route::apiResource('roles', UserRoleController::class);
             Route::post('/roles/updateRolePermitions/{roleId}', [UserRoleController::class, 'updateRolePermitions']);
         });
-        
     });
     Route::post('/AddToCart/Guest/{product_id}', [CartController::class, 'AddToCart']);
     Route::get('/getCart/Guest', [CartController::class, 'getCart']);
@@ -91,11 +91,10 @@ Route::prefix('v3')->group(function () {
 
         Route::post('/checkout', [PaymentController::class, 'createCheckoutSession']);
     });
-    // authentification + admin 
+    // authentification + admin
     Route::prefix('admin')->group(function () {
         Route::get('/payments/{id}', [PaymentController::class, 'show']);
     });
-
 });
 
 // Route::post('V2/addToCart', [CartController::class, 'addToCart']);
@@ -119,5 +118,3 @@ Route::prefix('v2')->group(function () {
     Route::put('/updatequantity', [CartController::class, 'modifyQuantityProductInCartUser']);
 });
 Route::post('/stripe/webhook', [PaymentController::class, 'handleWebhook']);
-
-

@@ -19,14 +19,13 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::factory(10)->create();
-        User::factory()->withClientRole()->count(10)->create();
+        User::factory()->withRole()->count(10)->create();
         Category::factory(10)->create();
         Subcategory::factory(10)->create();
         Product::factory(10)->create();
         Order::factory()
             ->count(10)
-            ->hasOrderItems(rand(1, 5)) // Adds 1 to 5 order items per order
+            ->hasOrderItems(rand(1, 5))
             ->create();
     }
 }

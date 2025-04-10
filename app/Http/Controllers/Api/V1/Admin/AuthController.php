@@ -166,4 +166,18 @@ class AuthController extends Controller
             'message' => 'User logged out successfully'
         ];
     }
+
+    public function usertest()
+    {
+        $user = auth()->user();;
+        $roles = $user->roles()->pluck('name');
+
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+        return response()->json([
+            'user' => $user,
+            'roles' => $roles,
+        ]);
+    }
 }
