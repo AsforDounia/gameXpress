@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Subcategory;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class SubcategoryController extends Controller
 {
@@ -21,13 +22,17 @@ class SubcategoryController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'slug' => 'required|string|unique:subcategories,slug',
+        $data =$request->validate([
+            'name' => 'required|string|max:255|unique:subcategories',
             'category_id' => 'required|exists:categories,id',
         ]);
 
-        $subcategory = Subcategory::create($request->all());
+        $slug = Str::slug($request->name);
+        $data['slug'] = $slug;
+
+
+
+        $subcategory = Subcategory::create($data);
 
         return response()->json(['message' => 'Subcategory created successfully', 'subcategory' => $subcategory], 201);
     }
@@ -55,11 +60,16 @@ class SubcategoryController extends Controller
         if (!$subcategory) {
             return response()->json(['message' => 'Subcategory not found'], 404);
         }
+        
         $request->validate([
-            'name' => 'sometimes|string|max:255',
-            'slug' => 'sometimes|string|unique:subcategories,slug',
+            'name' => 'required|string|max:255|unique:subcategories',
             'category_id' => 'sometimes|exists:categories,id',
         ]);
+
+        if ($request->has('name')) {
+            $slug = Str::slug($request->name);
+            $request['slug'] = $slug;
+        }
 
         $subcategory->update($request->all());
 

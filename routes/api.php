@@ -18,7 +18,7 @@ Route::prefix('v1')->group(function () {
     Route::prefix('admin')->group(function () {
         Route::post('register', [AuthController::class, 'register']);
         Route::post('login', [AuthController::class, 'login']);
-
+        Route::apiResource('products', ProductController::class)->only(['index', 'show']);
         Route::middleware('auth:sanctum')->group(function () {
             Route::post('logout', [AuthController::class, 'logout']);
             Route::get('dashboard', [DashboardController::class, 'index']);
@@ -26,7 +26,7 @@ Route::prefix('v1')->group(function () {
 
             Route::get('user', [AuthController::class, 'usertest']);
 
-            Route::apiResource('products', ProductController::class)->only(['index', 'show']);
+            // Route::apiResource('products', ProductController::class)->only(['index', 'show']);
             Route::apiResource('categories', CategoryController::class)->only(['index', 'show']);
             Route::apiResource('subcategories', SubcategoryController::class)->only(['index', 'show']);
             Route::middleware(['role:super_admin|product_manager'])->group(function () {
@@ -118,3 +118,6 @@ Route::prefix('v2')->group(function () {
     Route::put('/updatequantity', [CartController::class, 'modifyQuantityProductInCartUser']);
 });
 Route::post('/stripe/webhook', [PaymentController::class, 'handleWebhook']);
+Route::get('/user', [UserController::class, 'usertest'])->middleware('auth:sanctum');
+
+
