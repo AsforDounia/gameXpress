@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
@@ -19,7 +20,7 @@ class ProductController extends Controller
      */
     public function index()
     {
-        $products = Product::with(['subcategory', 'productImages'])->get();
+        $products = Product::with(['subcategory', 'productImages'])->orderBy('updated_at', 'desc')->get();
         return response()->json([
             'products' => $products,
         ]);
@@ -32,14 +33,18 @@ class ProductController extends Controller
     {
 
         $request->validate([
-            'name' => 'required|string|max:255',
-            'slug' => 'required|string|unique:products,slug',
+            'name' => 'required|string|max:255|unique:products',
             'price' => 'required|numeric',
             'stock' => 'required|integer',
             'subcategory_id' => 'required|exists:subcategories,id',
             'primary_image' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048',
             'images.*' => 'image|mimes:jpeg,png,jpg,gif',
         ]);
+
+        // slug generate automatically from the name
+        $slug = Str::slug($request->name);
+        $request->merge(['slug' => $slug]);
+
 
         $status = $request->stock > 0 ? 'available' : 'out_of_stock';
         // $product = Product::create($request->only(['name', 'slug', 'price', 'stock', 'subcategory_id']) + ['status' => $status]);
@@ -126,7 +131,7 @@ class ProductController extends Controller
             'subcategory_id' => 'sometimes|exists:subcategories,id',
             'deleted_images.*'=> 'sometimes|exists:product_images,image_url',
             'primary_image' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'images.*' => 'image|mimes:jpeg,png,jpg,gif',
+            'images.*' => 'sometimes|image|mimes:jpeg,png,jpg,gif',
         ]);
 
 
@@ -138,11 +143,12 @@ class ProductController extends Controller
         // $product->update($request->only(['name', 'slug', 'price', 'stock', 'status', 'subcategory_id']));
         $product->update($request->except(['images']));
 
-        if($request->hasFile('deleted_images')){
+        if($request->deleted_images){
             foreach ($request->deleted_images as $image) {
                 Storage::disk('public')->delete($image);
             }
             $product->productImages()->whereIn('image_url', $request->deleted_images)->delete();
+
         }
 
         if($request->hasFile('primary_image') || $request->hasFile('images')){
@@ -162,11 +168,12 @@ class ProductController extends Controller
             }
 
             if ($request->hasFile('images') ) {
+                // return response()-> json(['images' => $request->images ]);
                 foreach ($request->images as $index => $imageFile){
                     $path = $imageFile->store('product_images', 'public');
                     $newImages[] = [
                         'image_url' => $path,
-                        'is_primary' => ($isPrimary && $index === 0) ? true : false,
+                        'is_primary' => false,
                     ];
                 }
             }

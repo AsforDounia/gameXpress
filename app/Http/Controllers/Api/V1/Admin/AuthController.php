@@ -124,14 +124,28 @@ class AuthController extends Controller
         ]);
 
         $user = User::where('email', $request->email)->first();
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+
+        if (!Hash::check($request->password, $user->password)) {
+            return response()->json(['message' => 'Invalid credentials'], 401);
+        }
+
         $token = $user->createToken($user->name);
+
+        $roles = $user->roles()->get();
+        $roles = $roles->pluck('name')->toArray();
+        $permissions = $user->getAllPermissions();
 
         return [
             'status' => 'success',
             'message' => 'User logged in successfully',
             'data' => [
                 'user' => $user,
-                'token' => $token->plainTextToken
+                'token' => $token->plainTextToken,
+                'roles' => $roles,
+                'permissions' => $permissions
             ]
         ];
     }

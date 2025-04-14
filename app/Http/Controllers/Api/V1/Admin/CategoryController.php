@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api\V1\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Str;
 /**
  * @OA\Tag(
  *     name="Categories",
@@ -48,7 +48,11 @@ class CategoryController extends Controller
 
     public function index()
     {
-        $categories = Category::all();
+        // $categories = Category::all();
+        // // groub by update_at
+        // $categories = $categories->sortByDesc('updated_at')->values()->all();
+        // $categories = Category::orderBy('updated_at', 'desc')->get();
+        $categories = Category::withCount('subcategories')->orderBy('updated_at', 'desc')->get();
         return response()->json(['categories' => $categories]);
     }
 
@@ -92,11 +96,15 @@ class CategoryController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name' => 'required|string',
-            'slug' => 'required|string|unique:categories',
+            'name' => 'required|string|max:255|unique:categories',
         ]);
 
+        // slug is generated automatically
+        $slug = Str::slug($request->name);
+        $data['slug'] = $slug;
+
         $category = Category::create($data);
+
 
         return response()->json(['message' => 'Category created successfully', 'category' => $category], 201);
     }
@@ -138,7 +146,9 @@ class CategoryController extends Controller
 
     public function show(string $id)
     {
-        $category = Category::findOrFail($id);
+        // $category = Category::findOrFail($id);
+        // category with subcategories
+        $category = Category::with('subcategories')->findOrFail($id);
         return response()->json(['category' => $category]);
     }
 
