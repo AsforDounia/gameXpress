@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class ProductController extends Controller
 {
@@ -49,7 +50,7 @@ class ProductController extends Controller
         $status = $request->stock > 0 ? 'available' : 'out_of_stock';
         // $product = Product::create($request->only(['name', 'slug', 'price', 'stock', 'subcategory_id']) + ['status' => $status]);
         $product = Product::create(
-            $request->except(['images','primary_image']) + ['status' => $status]
+            $request->except(['images', 'primary_image']) + ['status' => $status]
         );
         // $productImages = [];
         // if ($request->hasFile('images')) {
@@ -64,13 +65,13 @@ class ProductController extends Controller
         // }
 
 
-        if($request->hasFile('primary_image') || $request->hasFile('images')){
+        if ($request->hasFile('primary_image') || $request->hasFile('images')) {
             $newImages = [];
 
-            $isPrimary = true ;
+            $isPrimary = true;
 
-            if($request->hasFile('primary_image')){
-                $isPrimary = false ;
+            if ($request->hasFile('primary_image')) {
+                $isPrimary = false;
 
                 $product->productImages()->update(['is_primary' => false]);
                 $image = $request->file('primary_image');
@@ -81,8 +82,8 @@ class ProductController extends Controller
                 ];
             }
 
-            if ($request->hasFile('images') ) {
-                foreach ($request->images as $index => $imageFile){
+            if ($request->hasFile('images')) {
+                foreach ($request->images as $index => $imageFile) {
                     $path = $imageFile->store('product_images', 'public');
                     $newImages[] = [
                         'image_url' => $path,
@@ -109,14 +110,23 @@ class ProductController extends Controller
         return response()->json([
             'product' => $product
         ], 200);
-
     }
-
+    // ----------------------------- update here ---------------------------
     /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, string $id)
     {
+        // return response()->json([
+        //     'name' => $request->input('name'),
+        //     'slug' => $request->input('slug'),
+        //     'price' => $request->input('price'),
+        //     'stock' => $request->input('stock'),
+        //     'subcategory_id' => $request->input('subcategory_id'),
+        //     'primary_image' => $request->file('primary_image') ? 'primary_image received' : null,
+        //     'images' => $request->file('product_images') ?? [],
+        //     'deleted_images' => $request->input('deleted_images') ?? [],
+        // ]);
         $product = Product::find($id);
 
         if (!$product) {
@@ -125,11 +135,15 @@ class ProductController extends Controller
 
         $request->validate([
             'name' => 'sometimes|string|max:255',
-            'slug' => 'sometimes|string|unique:products,slug',
+            'slug' => [
+                'sometimes',
+                'string',
+                Rule::unique('products', 'slug')->ignore($product->id)
+            ],
             'price' => 'sometimes|numeric',
             'stock' => 'sometimes|integer',
             'subcategory_id' => 'sometimes|exists:subcategories,id',
-            'deleted_images.*'=> 'sometimes|exists:product_images,image_url',
+            'deleted_images.*' => 'sometimes',
             'primary_image' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048',
             'images.*' => 'sometimes|image|mimes:jpeg,png,jpg,gif',
         ]);
@@ -143,40 +157,46 @@ class ProductController extends Controller
         // $product->update($request->only(['name', 'slug', 'price', 'stock', 'status', 'subcategory_id']));
         $product->update($request->except(['images']));
 
-        if($request->deleted_images){
+        if ($request->deleted_images) {
             foreach ($request->deleted_images as $image) {
                 Storage::disk('public')->delete($image);
             }
             $product->productImages()->whereIn('image_url', $request->deleted_images)->delete();
-
         }
 
-        if($request->hasFile('primary_image') || $request->hasFile('images')){
-            $newImages = [];
-            $isPrimary = true ;
-            if($request->hasFile('primary_image')){
-                $isPrimary = false ;
-                $product->productImages()->update(['is_primary' => false]);
+        $newImages = [];
 
-                $product->productImages()->update(['is_primary' => false]);
-                $image = $request->file('primary_image');
-                $path = $image->store('product_images', 'public');
+        if ($request->hasFile('primary_image')) {
+            $oldPrimary = $product->productImages()->where('is_primary', true)->first();
+
+            if ($oldPrimary) {
+                Storage::disk('public')->delete($oldPrimary->image_url);
+                $oldPrimary->delete();
+            }
+
+            $image = $request->file('primary_image');
+            $path = $image->store('product_images', 'public');
+
+            $newImages[] = [
+                'image_url' => $path,
+                'is_primary' => true,
+            ];
+        }
+
+
+        if ($request->hasFile('images')) {
+            // return 'we have images!!!';
+            foreach ($request->file('images') as $imageFile) {
+                $path = $imageFile->store('product_images', 'public');
+
                 $newImages[] = [
                     'image_url' => $path,
-                    'is_primary' => true,
+                    'is_primary' => false,
                 ];
             }
+        }
 
-            if ($request->hasFile('images') ) {
-                // return response()-> json(['images' => $request->images ]);
-                foreach ($request->images as $index => $imageFile){
-                    $path = $imageFile->store('product_images', 'public');
-                    $newImages[] = [
-                        'image_url' => $path,
-                        'is_primary' => false,
-                    ];
-                }
-            }
+        if (!empty($newImages)) {
             $product->productImages()->createMany($newImages);
         }
 
