@@ -160,4 +160,24 @@ class AuthController extends Controller
             'message' => 'User logged out successfully'
         ];
     }
+
+    public function getUser()
+    {
+        $user = auth()->user();
+        $roles = $user->roles()->pluck('name');
+
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+        return response()->json([
+            'user' => $user,
+            'roles' => $roles,
+        ]);
+    }
+
+    public function getRoles()
+    {
+        $roles = Role::all();
+        return response()->json($roles);
+    }
 }
