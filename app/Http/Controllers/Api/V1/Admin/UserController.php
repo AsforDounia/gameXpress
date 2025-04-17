@@ -14,7 +14,8 @@ class UserController extends Controller
      */
     public function index()
     {
-        $users = User::all();
+        $users = User::with('roles')->get();
+      
         return response()->json($users);
     }
 
@@ -52,21 +53,37 @@ class UserController extends Controller
     public function update(Request $request, string $id)
     {
         $user = User::find($id);
+    
         if (!$user) {
             return response()->json(['message' => 'User not found'], 404);
         }
-
+    
         $request->validate([
             'name' => 'sometimes|string|max:255',
             'email' => 'sometimes|email|unique:users,email,' . $id,
             'password' => 'sometimes|string|min:6|confirmed',
+            'role' => 'sometimes|string|exists:roles,name',
         ]);
-
-        $user->update($request->all());
-
-        return response()->json(['message' => 'User updated successfully', 'user' => $user]);
+    
+        $user->update([
+            'name' => $request->name ?? $user->name,
+            'email' => $request->email ?? $user->email,
+            'password' => $request->password ? bcrypt($request->password) : $user->password,
+        ]);
+    
+        if ($request->filled('role')) {
+            $role = $request->role;
+            $user->syncRoles($role);
+        }
+    
+        $user->load('roles');
+    
+        return response()->json([
+            'message' => 'User updated successfully',
+            'user' => $user
+        ]);
     }
-
+    
     /**
      * Remove the specified resource from storage.
      */

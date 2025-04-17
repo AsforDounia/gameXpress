@@ -22,6 +22,8 @@ Route::prefix('v1')->group(function () {
         Route::middleware('auth:sanctum')->group(function () {
             Route::post('logout', [AuthController::class, 'logout']);
             Route::get('dashboard', [DashboardController::class, 'index']);
+            Route::get('user', [AuthController::class, 'getUser']);
+            Route::get('roles', [AuthController::class, 'getRoles']);
 
 
             Route::get('user', [AuthController::class, 'usertest']);

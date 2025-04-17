@@ -169,6 +169,7 @@ class CartController extends Controller
             $items[] = [
                 'product_id' => $item->product_id,
                 'name' => $product->name,
+                'image' => $product->productImages()->where('is_primary', true)->first()?->image_url,
                 'price' => $product->price,
                 'quantity' => $item->quantity,
             ];
@@ -327,40 +328,40 @@ class CartController extends Controller
             return response()->json(['status' => 'erreur', 'message' => 'quantité insufisant']);
         }
     }
-/**
- * @OA\Delete(
- *     path="/api/v2/destroyProductForClient/{productId}",
- *     operationId="removeProductFromCart",
- *     tags={"Cart"},
- *     summary="Remove product from user's cart",
- *     security={{"sanctum": {}}},
- *     @OA\Parameter(
- *         name="productId",
- *         in="path",
- *         description="ID of the product to remove",
- *         required=true,
- *         @OA\Schema(type="integer")
- *     ),
- *     @OA\Parameter(
- *         name="X-Session-ID",
- *         in="header",
- *         required=false,
- *         @OA\Schema(type="string"),
- *         description="Session ID for guests"
- *     ),
- *     @OA\Response(
- *         response=200,
- *         description="Product removed successfully",
- *         @OA\JsonContent(
- *             @OA\Property(property="message", type="string", example="Product removed from your cart")
- *         )
- *     ),
- *     @OA\Response(
- *         response=404,
- *         description="Product not found in cart"
- *     )
- * )
- */
+    /**
+     * @OA\Delete(
+     *     path="/api/v2/destroyProductForClient/{productId}",
+     *     operationId="removeProductFromCart",
+     *     tags={"Cart"},
+     *     summary="Remove product from user's cart",
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="productId",
+     *         in="path",
+     *         description="ID of the product to remove",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="X-Session-ID",
+     *         in="header",
+     *         required=false,
+     *         @OA\Schema(type="string"),
+     *         description="Session ID for guests"
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Product removed successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Product removed from your cart")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Product not found in cart"
+     *     )
+     * )
+     */
 
 
     public function destoryProductFromCart(Request $request, $productId)
@@ -383,34 +384,34 @@ class CartController extends Controller
             'yourCart' => CartItem::where('user_id', $userId)->get(),
         ], 200);
     }
-/**
- * @OA\Post(
- *     path="/api/v2/calculateTotalForClient",
- *     operationId="calculateTotalCart",
- *     tags={"Cart"},
- *     summary="Calculate the total price of the cart with tax and discounts",
- *     security={{"sanctum":{}}},
- *     @OA\Parameter(
- *         name="X-Session-ID",
- *         in="header",  
- *         required=false,
- *         @OA\Schema(type="string"),
- *         description="Session ID for guests"
- *     ),
- *     @OA\Response(
- *         response=200,
- *         description="Total calculated successfully",
- *         @OA\JsonContent(
- *             @OA\Property(property="total_before_tax", type="number", example=100.0),
- *             @OA\Property(property="total_tax", type="number", example=20.0),
- *             @OA\Property(property="total_after_tax", type="number", example=120.0),
- *             @OA\Property(property="total_discount", type="number", example=10.0),
- *             @OA\Property(property="total_final", type="number", example=110.0)
- *         )
- *     ),
- *     @OA\Response(response=404, description="Your cart is empty")
- * )
- */
+    /**
+     * @OA\Post(
+     *     path="/api/v2/calculateTotalForClient",
+     *     operationId="calculateTotalCart",
+     *     tags={"Cart"},
+     *     summary="Calculate the total price of the cart with tax and discounts",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="X-Session-ID",
+     *         in="header",  
+     *         required=false,
+     *         @OA\Schema(type="string"),
+     *         description="Session ID for guests"
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Total calculated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="total_before_tax", type="number", example=100.0),
+     *             @OA\Property(property="total_tax", type="number", example=20.0),
+     *             @OA\Property(property="total_after_tax", type="number", example=120.0),
+     *             @OA\Property(property="total_discount", type="number", example=10.0),
+     *             @OA\Property(property="total_final", type="number", example=110.0)
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Your cart is empty")
+     * )
+     */
 
 
     public function calculateTotalofCart(Request $request)
