@@ -151,32 +151,40 @@ class CartController extends Controller
             $sessionId = $request->header('X-Session-ID');
 
             if (!$sessionId) {
-                return ['message' => 'Session ID is required in X-Session-ID header'];
+                return  response()->json(['message' => 'Session ID is required in X-Session-ID header']);
             }
 
             $cartItems = CartItem::where('session_id', $sessionId)->get();
         }
 
         if ($cartItems->isEmpty()) {
-            return ['message' => 'Cart is empty or session not found'];
+            return  response()->json(['message' => 'Cart is empty or session not found']);
         }
 
         $items = [];
 
         foreach ($cartItems as $item) {
             $product = $item->product;
+            // primary image
+            $product->primary_image = $product->productImages()->where('is_primary', true)->first();
+            if ($product->primary_image) {
+                $product->primary_image = url('storage/' . $product->primary_image->image_url);
+            } else {
+                $product->primary_image = null;
+            }
 
             $items[] = [
                 'product_id' => $item->product_id,
                 'name' => $product->name,
                 'price' => $product->price,
                 'quantity' => $item->quantity,
+                'image' => $product->primary_image,
             ];
         }
         $totalItems = $cartItems->sum('quantity');
         $totalPrices = Helper::calculateTotalHelper($cartItems);
         // return $totalPrices;
-        return [
+        return response()->json([
             'items' => $items,
             // 'totalCart' => $totalPrices,
             'total_before_tax' => $totalPrices['total_before_tax'],
@@ -185,7 +193,7 @@ class CartController extends Controller
             'total_discount' => $totalPrices['total_discount'],
             'total_final' => $totalPrices['total_final'],
             'totalItems' => $totalItems
-        ];
+        ]);
     }
 
     /**
@@ -392,7 +400,7 @@ class CartController extends Controller
  *     security={{"sanctum":{}}},
  *     @OA\Parameter(
  *         name="X-Session-ID",
- *         in="header",  
+ *         in="header",
  *         required=false,
  *         @OA\Schema(type="string"),
  *         description="Session ID for guests"
