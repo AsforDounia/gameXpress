@@ -25,9 +25,7 @@ Route::prefix('v1')->group(function () {
             Route::get('user', [AuthController::class, 'getUser']);
             Route::get('roles', [AuthController::class, 'getRoles']);
 
-
-            Route::get('user', [AuthController::class, 'usertest']);
-
+            
             // Route::apiResource('products', ProductController::class)->only(['index', 'show']);
             Route::apiResource('categories', CategoryController::class)->only(['index', 'show']);
             Route::apiResource('subcategories', SubcategoryController::class)->only(['index', 'show']);
