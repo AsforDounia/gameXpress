@@ -21,11 +21,20 @@ class ProductController extends Controller
      */
     public function index()
     {
-        $products = Product::with(['subcategory', 'productImages'])->orderBy('updated_at', 'desc')->get();
+        $products = Product::with(['subcategory', 'primaryImage'])
+            ->orderBy('updated_at', 'desc')
+            ->get()
+            ->map(function ($product) {
+                $product->primary_image = $product->primaryImage?->image_url;
+                unset($product->primaryImage); // optional: remove the relation object
+                return $product;
+            });
+
         return response()->json([
             'products' => $products,
         ]);
     }
+
 
     /**
      * Store a newly created resource in storage.
