@@ -25,7 +25,10 @@ Route::prefix('v1')->group(function () {
             Route::get('user', [AuthController::class, 'getUser']);
             Route::get('roles', [AuthController::class, 'getRoles']);
 
+<<<<<<< HEAD
             
+=======
+>>>>>>> 92ca8963815325e6e96736be70361fcb3725a365
             // Route::apiResource('products', ProductController::class)->only(['index', 'show']);
             Route::apiResource('categories', CategoryController::class)->only(['index', 'show']);
             Route::apiResource('subcategories', SubcategoryController::class)->only(['index', 'show']);
@@ -115,7 +118,7 @@ Route::prefix('v3')->group(function () {
 // });
 Route::prefix('v2')->group(function () {
     Route::post('/check-stock/{productId}/{quantity}', [CartController::class, 'checkStock']);
-    Route::put('/updatequantity', [CartController::class, 'modifyQuantityProductInCartUser']);
+    Route::put('/updatequantity/{cart_itemId}', [CartController::class, 'modifyQuantityProductInCart']);
 });
 Route::post('/stripe/webhook', [PaymentController::class, 'handleWebhook']);
 Route::get('/user', [UserController::class, 'usertest'])->middleware('auth:sanctum');

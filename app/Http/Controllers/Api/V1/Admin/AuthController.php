@@ -177,7 +177,7 @@ class AuthController extends Controller
 
     public function getUser()
     {
-        $user = auth()->user();
+        $user = auth()->user();;
         $roles = $user->roles()->pluck('name');
 
         if (!$user) {
