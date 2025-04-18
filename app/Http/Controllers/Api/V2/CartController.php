@@ -167,6 +167,7 @@ class CartController extends Controller
             $product = $item->product;
 
             $items[] = [
+                'cart_item_id' => $item->id,
                 'product_id' => $item->product_id,
                 'name' => $product->name,
                 'image' => $product->productImages()->where('is_primary', true)->first()?->image_url,
@@ -233,33 +234,34 @@ class CartController extends Controller
      * )
      */
 
+
     public function cartMerge(Request $request)
     {
-        $sessionId = $request->header('X-Session-ID');
+        $guestCartItems = $request->input('cart');
         $user = $request->user();
 
-        $sessionItems = CartItem::whereNotNull('session_id')
-            ->where('session_id', $sessionId)
-            ->get();
-
-        foreach ($sessionItems as $sessionItem) {
+        foreach ($guestCartItems as $guestCartItem) {
             $userOrder = CartItem::where('user_id', $user->id)
-                ->where('product_id', $sessionItem->product_id)
+                ->where('product_id', $guestCartItem['cart_item_id'])
                 ->first();
-
-            if ($userOrder) {
-                $userOrder->quantity += $sessionItem->quantity;
-                $userOrder->save();
-            } else {
-                CartItem::create([
-                    'product_id' => $sessionItem->product_id,
-                    'user_id' => $user->id,
-                    'session_id' => null,
-                    'quantity' => $sessionItem->quantity,
-                ]);
+            $product = Product::find($guestCartItem['cart_item_id']);
+            return $product;
+            if ($product) {
+                if ($userOrder) {
+                    $newQuantity = $userOrder->quantity + $guestCartItem['quantity'];
+                    if ($newQuantity <= $product->stock) {
+                        $userOrder->quantity = $newQuantity;
+                        $userOrder->save();
+                    }
+                } else {
+                    CartItem::create([
+                        'product_id' => $product->id,
+                        'user_id' => $user->id,
+                        'session_id' => null,
+                        'quantity' => $guestCartItem['cart_item_id'],
+                    ]);
+                }
             }
-
-            $sessionItem->delete();
         }
 
         return response()->json([

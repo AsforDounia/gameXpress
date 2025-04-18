@@ -49,9 +49,9 @@ Route::prefix('v1')->group(function () {
     });
 });
 
-Route::prefix('v1/admin')->group(function () {
-    Route::middleware(['auth:sanctum'])->get('/merge', [CartController::class, 'cartMerge']);
-});
+// Route::prefix('v1/admin')->group(function () {
+    Route::middleware(['auth:sanctum'])->post('/merge', [CartController::class, 'cartMerge']);
+// });
 
 Route::prefix('v2')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
